@@ -35,3 +35,6 @@ const CATALOG = [
 
 function money(n){ return n==null ? 'Price on request' : '₹'+Number(n).toLocaleString('en-IN'); }
 function getProduct(id){ return CATALOG.find(p=>p.id===id); }
+
+let ACTIVE_CATALOG = CATALOG.map(p=>({...p,stock_qty:p.status==='sold'?0:1}));
+async function hydrateCatalog(){try{if(!window.supabase||!window.NV_CONFIG||window.NV_CONFIG.supabaseUrl.includes('YOUR_PROJECT_REF'))return;const client=window.supabase.createClient(window.NV_CONFIG.supabaseUrl,window.NV_CONFIG.supabasePublishableKey);const {data,error}=await client.from('products').select('*').eq('active',true).order('name');if(!error&&data?.length)ACTIVE_CATALOG=data.map(p=>({...p,tags:Array.isArray(p.tags)?p.tags:[],details:Array.isArray(p.details)?p.details:[]}));}catch(_){}}
