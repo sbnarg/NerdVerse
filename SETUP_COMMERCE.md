@@ -1,41 +1,48 @@
-# NerdVerse India — commerce setup
+# NerdVerse India — production setup
 
-The storefront stays on free GitHub Pages. Secure authentication, database, Razorpay server calls, webhooks and transactional email run in Supabase Edge Functions.
+Most application code is version-controlled and deployable from GitHub. The items below are
+account-level settings/secrets and therefore must be configured in the provider dashboards.
 
-## 1. Supabase
-1. Create a Supabase project.
-2. In SQL Editor, run `supabase/schema.sql`.
-3. Enable Google under Authentication → Providers → Google. Configure the Google OAuth web client with the Supabase callback and site URL.
-4. In Authentication → URL Configuration, add `https://sbnarg.github.io/NerdVerse/account.html` to the redirect allow list and set the site URL to `https://sbnarg.github.io/NerdVerse/`.
-5. Copy the project's publishable/anon browser key and URL into `config.js`. Never put a secret/service-role key in the browser.
-6. After the first admin Google sign-in, run:
-`update public.profiles set role='admin' where id=(select id from auth.users where email='YOUR_ADMIN_EMAIL');`
+## Supabase
 
-## 2. Deploy Edge Functions
-Deploy: `create-payment-order`, `verify-payment`, `razorpay-webhook`, `admin-api`.
+1. GitHub integration: repository `sbnarg/NerdVerse`, working directory `.`, production branch `main`, Deploy to production ON.
+2. Authentication URL Configuration:
+   - Site URL: `https://sbnarg.github.io/NerdVerse/`
+   - Redirect URL: `https://sbnarg.github.io/NerdVerse/account.html`
+3. Put the project's **public project URL** and **publishable key** in `config.js`. Never put a secret/service-role key in browser code.
+4. After the intended administrator has signed in once, promote that account in the database. Do not commit the administrator email to the repository.
 
-Set these production secrets in Supabase Edge Function Secrets:
+## Edge Functions
+
+Functions are versioned under `supabase/functions/`:
+- `create-payment-order`
+- `verify-payment`
+- `razorpay-webhook`
+- `admin-api`
+
+Configure these Edge Function secrets in Supabase:
 - `RAZORPAY_KEY_ID`
 - `RAZORPAY_KEY_SECRET`
 - `RAZORPAY_WEBHOOK_SECRET`
 - `RESEND_API_KEY`
 - `EMAIL_FROM`
 
-Supabase provides its URL/anon/service credentials to Edge Functions. Never commit these secrets.
+## Razorpay
 
-## 3. Razorpay
-Use test keys first. The server creates Razorpay Orders, the browser opens Standard Checkout, the server verifies the payment signature, and the webhook confirms captured/failed payments.
+Use test credentials until checkout has been end-to-end tested. Configure the webhook to:
+`https://<PROJECT_REF>.supabase.co/functions/v1/razorpay-webhook`
 
-Webhook URL:
-`https://YOUR_PROJECT_REF.supabase.co/functions/v1/razorpay-webhook`
+The Razorpay webhook secret must exactly match `RAZORPAY_WEBHOOK_SECRET` in Supabase.
 
-Use the same webhook secret in Razorpay and `RAZORPAY_WEBHOOK_SECRET`.
+## Release gate
 
-## 4. Email
-Create a Resend account, verify a sending domain, create an API key, and set `RESEND_API_KEY` and `EMAIL_FROM`. Customer emails are sent for payment confirmation/failure and every admin order-status update, including tracking details.
-
-## 5. Order lifecycle
-Customer signs in → cart → server reserves stock → server creates Razorpay order → customer pays → signature/webhook confirms payment → email confirmation → admin processes/updates order → admin enters AWB + tracking URL → customer sees the status in My Account and receives an email → Delivered.
-
-## 6. Admin
-Admin login is the same Supabase Google SSO, but the database role must be `admin`. The Admin console shows orders/revenue/low stock, lets you change order status, enter tracking/AWB, and update inventory quantities.
+Before accepting real orders:
+- Browser `config.js` points at the production Supabase project.
+- Customer sign-in succeeds from GitHub Pages.
+- Catalogue loads from Supabase.
+- Test checkout creates and verifies a Razorpay payment.
+- Webhook changes payment/order state.
+- Inventory decrements once and is restored on failed/expired orders.
+- Admin console is restricted to the admin role.
+- Confirmation/status email is delivered.
+- Only then switch Razorpay from test to live credentials.
