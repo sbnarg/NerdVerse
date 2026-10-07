@@ -1,6 +1,6 @@
 (function(){
   const ready=()=>window.supabase&&window.NV_CONFIG&&!window.NV_CONFIG.supabaseUrl.includes('YOUR_PROJECT_REF');
-  let client=null;if(ready())client=window.supabase.createClient(window.NV_CONFIG.supabaseUrl,window.NV_CONFIG.supabasePublishableKey);
+  let client=null;if(ready())client=window.supabase.createClient(window.NV_CONFIG.supabaseUrl,window.NV_CONFIG.supabasePublishableKey,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true,autoRefreshToken:true}});
   window.NV_AUTH={client,configured:!!client,
     async user(){if(!client)return null;const {data}=await client.auth.getUser();return data.user||null;},
     async session(){if(!client)return null;const {data}=await client.auth.getSession();return data.session||null;},
