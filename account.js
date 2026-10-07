@@ -6,6 +6,13 @@ document.getElementById('magicForm').onsubmit=async e=>{e.preventDefault();const
 if(!NV_AUTH.configured){msg.textContent='Setup required: add Supabase credentials in config.js.';return;}
 
 async function resolveUser(){
+  const params=new URLSearchParams(location.search);
+  const code=params.get('code');
+  if(code){
+    const {error:exchangeError}=await NV_AUTH.client.auth.exchangeCodeForSession(code);
+    if(exchangeError){msg.textContent='Sign-in error: '+exchangeError.message;return null;}
+    history.replaceState({},document.title,location.pathname);
+  }
   const {data:{session},error}=await NV_AUTH.client.auth.getSession();
   if(error){msg.textContent='Sign-in error: '+error.message;return null;}
   if(session?.user)return session.user;
