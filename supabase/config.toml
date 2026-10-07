@@ -1,0 +1,8 @@
+[functions.create-payment-order]
+verify_jwt = true
+[functions.verify-payment]
+verify_jwt = true
+[functions.admin-api]
+verify_jwt = true
+[functions.razorpay-webhook]
+verify_jwt = false
