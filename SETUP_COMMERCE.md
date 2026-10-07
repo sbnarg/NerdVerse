@@ -29,10 +29,29 @@ Configure these Edge Function secrets in Supabase:
 
 ## Razorpay
 
-Use test credentials until checkout has been end-to-end tested. Configure the webhook to:
-`https://<PROJECT_REF>.supabase.co/functions/v1/razorpay-webhook`
+Use test credentials until checkout has been end-to-end tested.
 
-The Razorpay webhook secret must exactly match `RAZORPAY_WEBHOOK_SECRET` in Supabase.
+### Credential safety
+
+- If a Razorpay Key Secret is ever shown in a screenshot, chat, issue, commit, or other shared location, treat that key pair as compromised and regenerate it before use.
+- Never put `RAZORPAY_KEY_SECRET` or `RAZORPAY_WEBHOOK_SECRET` in `config.js`, GitHub Pages, or other browser code.
+- Store the clean test credentials only as Supabase Edge Function secrets: `RAZORPAY_KEY_ID` and `RAZORPAY_KEY_SECRET`.
+- Do not reuse test credentials for live payments. Generate live credentials only after Razorpay activates the account and the test checkout passes end to end.
+
+### Webhook
+
+Configure the Razorpay webhook to:
+`https://hzzuqylaypoylakgnqxs.supabase.co/functions/v1/razorpay-webhook`
+
+Generate a separate random webhook secret in Razorpay and store the identical value in Supabase as `RAZORPAY_WEBHOOK_SECRET`. Subscribe at minimum to payment/order success and payment failure events used by `razorpay-webhook`.
+
+### Current integration
+
+The storefront is already wired for the server-side flow:
+
+`checkout.js → create-payment-order → Razorpay Checkout → verify-payment`
+
+The webhook independently reconciles successful/failed payments. The browser receives the publishable Razorpay Key ID from `create-payment-order`; the Key Secret remains server-side.
 
 ## Release gate
 
