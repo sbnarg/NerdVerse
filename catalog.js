@@ -41,7 +41,7 @@ async function hydrateCatalog(){
  try{
   if(!window.supabase||!window.NV_CONFIG)return;
   const client=window.supabase.createClient(window.NV_CONFIG.supabaseUrl,window.NV_CONFIG.supabasePublishableKey);
-  const {data,error}=await client.from('products').select('id,name,brand,price,stock,status,description,condition,category_id,image_urls').eq('status','published').order('name');
+  const {data,error}=await client.from('products').select('id,name,brand,price,stock,status,description,condition,category_id,image_urls').eq('status','active').order('name');
   if(error){console.warn('NerdVerse catalogue sync failed',error.message);ACTIVE_CATALOG=[];return}
   const {data:categories}=await client.from('categories').select('id,name');
   const byId=Object.fromEntries((categories||[]).map(c=>[c.id,c.name]));
