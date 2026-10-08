@@ -4,5 +4,5 @@
 window.NV_CONFIG = {
   supabaseUrl: 'https://hzzuqylaypoylakgnqxs.supabase.co',
   supabasePublishableKey: 'sb_publishable_GngJr5uBJeG7adCS5eQ2pg_2g7xx550',
-  siteUrl: 'https://sbnarg.github.io/NerdVerse/'
+  siteUrl: 'https://nerdverseindia.com/'
 };
