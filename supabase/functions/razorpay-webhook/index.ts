@@ -24,7 +24,7 @@ Deno.serve(async req=>{
     if(!o)return new Response('order not found',{status:503});
     if(o.payment_status==='paid')return new Response(o.razorpay_payment_id===payment.id?'ok':'payment mismatch',{status:o.razorpay_payment_id===payment.id?200:409});
     if(o.payment_status!=='pending')return new Response('order state conflict',{status:409});
-    const next={status:'paid',payment_status:'paid',razorpay_payment_id:payment.id,updated_at:new Date().toISOString()};
+    const next={status:'confirmed',payment_status:'paid',razorpay_payment_id:payment.id,updated_at:new Date().toISOString()};
     const {data:updated,error:updateError}=await admin.from('orders').update(next).eq('id',o.id).eq('payment_status','pending').select('id').maybeSingle();
     if(updateError)return new Response('payment update failed',{status:503});
     if(!updated){
