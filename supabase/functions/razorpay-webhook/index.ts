@@ -22,6 +22,7 @@ Deno.serve(async req=>{
     const {data:o,error:lookupError}=await admin.from('orders').select('*').eq('razorpay_order_id',razorpayOrderId).maybeSingle();
     if(lookupError)return new Response('order lookup failed',{status:503});
     if(!o)return new Response('order not found',{status:503});
+    if(payment.currency!=='INR'||payment.amount!==Math.round(Number(o.total)*100))return new Response('payment amount or currency mismatch',{status:409});
     if(o.payment_status==='paid')return new Response(o.razorpay_payment_id===payment.id?'ok':'payment mismatch',{status:o.razorpay_payment_id===payment.id?200:409});
     if(o.payment_status!=='pending')return new Response('order state conflict',{status:409});
     const next={status:'confirmed',payment_status:'paid',razorpay_payment_id:payment.id,updated_at:new Date().toISOString()};
