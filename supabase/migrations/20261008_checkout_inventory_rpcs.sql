@@ -19,6 +19,8 @@ DECLARE
   v_count integer;
 BEGIN
   IF v_user IS NULL THEN RAISE EXCEPTION 'Sign in required'; END IF;
+  IF lower(trim(coalesce(p_email,''))) IS DISTINCT FROM lower(coalesce(auth.jwt()->>'email',''))
+  THEN RAISE EXCEPTION 'Checkout email must match signed-in account'; END IF;
   IF jsonb_typeof(p_items) IS DISTINCT FROM 'array'
      OR jsonb_array_length(p_items) NOT BETWEEN 1 AND 30
   THEN RAISE EXCEPTION 'Cart must contain 1 to 30 products'; END IF;
