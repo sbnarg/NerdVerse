@@ -6,26 +6,19 @@ document.getElementById('magicForm').onsubmit=async e=>{e.preventDefault();const
 if(!NV_AUTH.configured){msg.textContent='Setup required: add Supabase credentials in config.js.';return;}
 
 async function resolveUser(){
-  const params=new URLSearchParams(location.search);
-  const code=params.get('code');
-  if(code){
-    const {error:exchangeError}=await NV_AUTH.client.auth.exchangeCodeForSession(code);
-    if(exchangeError){msg.textContent='Sign-in error: '+exchangeError.message;return null;}
-    history.replaceState({},document.title,location.pathname);
-  }
+  // Supabase's detectSessionInUrl handles the PKCE code exchange during
+  // client initialization. Do not exchange the same code a second time.
   const {data:{session},error}=await NV_AUTH.client.auth.getSession();
-  if(error){msg.textContent='Sign-in error: '+error.message;return null;}
-  if(session?.user)return session.user;
-  return await new Promise(resolve=>{
-    let settled=false;
-    const {data:{subscription}}=NV_AUTH.client.auth.onAuthStateChange((event,nextSession)=>{
-      if(settled)return;
-      if(event==='SIGNED_IN'||event==='INITIAL_SESSION'){
-        settled=true;subscription.unsubscribe();resolve(nextSession?.user||null);
-      }
-    });
-    setTimeout(()=>{if(!settled){settled=true;subscription.unsubscribe();resolve(null);}},1500);
-  });
+  if(error){
+    msg.textContent='Sign-in error: '+error.message;
+    return null;
+  }
+  if(session?.user){
+    if(new URLSearchParams(location.search).has('code'))
+      history.replaceState({},document.title,location.pathname);
+    return session.user;
+  }
+  return null;
 }
 
 const user=await resolveUser();
