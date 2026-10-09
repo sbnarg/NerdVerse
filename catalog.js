@@ -47,7 +47,7 @@ async function hydrateCatalog(){
   const byId=Object.fromEntries((categories||[]).map(c=>[c.id,c.name]));
   ACTIVE_CATALOG=(data||[]).map(p=>{
    const legacy=CATALOG.find(c=>c.name===p.name);
-   return {...p,category:byId[p.category_id]||legacy?.category||'Other Collectibles',image:p.image_urls?.[0]||legacy?.image||'',stock_qty:p.stock,badge:legacy?.badge||'COLLECTIBLE',tags:legacy?.tags||[],details:legacy?.details||[],series:legacy?.series||'',subcategory:legacy?.subcategory||'',condition:p.condition||legacy?.condition||'',status:p.stock>0&&Number(p.price)>0?'available':'sold'};
+   return {...p,category:byId[p.category_id]||legacy?.category||'Other Collectibles',image:p.image_urls?.[0]||legacy?.image||'',images:Array.isArray(p.image_urls)?p.image_urls:[],stock_qty:p.stock,badge:legacy?.badge||'COLLECTIBLE',tags:legacy?.tags||[],details:legacy?.details||[],series:legacy?.series||'',subcategory:legacy?.subcategory||'',condition:p.condition||legacy?.condition||'',status:Number(p.stock)>0?'available':'sold'};
   });
  }catch(e){console.warn('Catalogue sync failed',e);ACTIVE_CATALOG=[]}
 }
