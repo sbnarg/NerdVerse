@@ -28,7 +28,7 @@ gate.hidden=true;panel.hidden=false;
 document.getElementById('accountName').textContent=user.user_metadata?.full_name||user.email;
 document.getElementById('accountEmail').textContent=user.email||'';
 // Show admin entry only after checking the same admin_users role source used by admin-api.
-try{const {data:role,error:roleError}=await NV_AUTH.client.from('admin_users').select('role').eq('id',user.id).maybeSingle();if(!roleError&&role?.role==='admin')document.getElementById('adminEntry').hidden=false;}catch(e){console.warn('Admin entry role check unavailable',e)}
+try{const {data:{session:currentSession}}=await NV_AUTH.client.auth.getSession();if(currentSession){const response=await fetch(NV_CONFIG.supabaseUrl+'/functions/v1/admin-api',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+currentSession.access_token},body:JSON.stringify({action:'whoami'})});if(response.ok){const role=await response.json();if(role.is_admin)document.getElementById('adminEntry').hidden=false;}}}catch(e){console.warn('Admin entry check unavailable',e)}
 const {data,error}=await NV_AUTH.client.from('orders').select('id,order_number,status,payment_status,total,tracking_number,created_at,order_items(product_name,quantity,unit_price,total_price)').eq('customer_id',user.id).order('created_at',{ascending:false});
 const el=document.getElementById('orders');
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
