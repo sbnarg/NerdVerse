@@ -51,3 +51,8 @@ async function hydrateCatalog(){
   });
  }catch(e){console.warn('Catalogue sync failed',e);ACTIVE_CATALOG=[]}
 }
+
+// Segment detection uses product metadata, never guesses from uploaded photographs.
+const NV_SEGMENTS=["Masters of the Universe","G.I. Joe","Hot Wheels","Mini GT","Tomica","Hasbro","Marvel","DC","Funskool","Mattel","Transformers","Star Wars","Matchbox","Majorette","LEGO","McFarlane"];
+function nvNormalize(s){return String(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim()}
+function nvDetectSegment(p){const name=nvNormalize(p.name),brand=nvNormalize(p.brand),description=nvNormalize(p.description);const all=[name,brand,description].join(' ');const match=(re)=>re.test(all);if(match(/masters of the universe|\bmotu\b|he man|skeletor/))return 'Masters of the Universe';if(match(/g i joe|\bgijoe\b|\bcobra\b|international heroes/))return 'G.I. Joe';if(match(/hot wheels/))return 'Hot Wheels';if(match(/mini gt|mini gt64/))return 'Mini GT';if(match(/tomica/))return 'Tomica';if(match(/transformers|optimus prime|megatron/))return 'Transformers';if(match(/star wars|mandalorian/))return 'Star Wars';if(match(/matchbox/))return 'Matchbox';if(match(/majorette/))return 'Majorette';if(match(/mcfarlane/))return 'McFarlane';if(match(/\blego\b/))return 'LEGO';if(match(/\bmarvel\b|spider man|iron man|avengers/))return 'Marvel';if(match(/\bdc\b|batman|superman|justice league/))return 'DC';if(match(/\bfunskool\b/))return 'Funskool';if(match(/\bhasbro\b/))return 'Hasbro';if(match(/\bmattel\b/))return 'Mattel';return ''}
