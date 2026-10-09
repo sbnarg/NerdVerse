@@ -3,6 +3,7 @@ const gate=document.getElementById('authGate'),panel=document.getElementById('ac
 document.getElementById('googleBtn').onclick=()=>NV_AUTH.google();
 document.getElementById('signOut').onclick=()=>NV_AUTH.signOut();
 document.getElementById('magicForm').onsubmit=async e=>{e.preventDefault();const {error}=await NV_AUTH.magicLink(document.getElementById('magicEmail').value.trim());msg.textContent=error?'Unable to send sign-in link.':'Check your inbox for the secure sign-in link.';};
+document.getElementById('emailSignupForm').onsubmit=async e=>{e.preventDefault();if(!NV_AUTH.configured){msg.textContent='Sign-up unavailable right now.';return;}const btn=e.currentTarget.querySelector('button');btn.disabled=true;try{const email=document.getElementById('signupEmail').value.trim(),password=document.getElementById('signupPassword').value;const {error}=await NV_AUTH.client.auth.signUp({email,password,options:{emailRedirectTo:NV_CONFIG.siteUrl+'account.html'}});msg.textContent=error?'Unable to create account: '+error.message:'Check your email for the verification link. After verification, sign in to view your orders.';}finally{btn.disabled=false;}};
 if(!NV_AUTH.configured){msg.textContent='Setup required: add Supabase credentials in config.js.';return;}
 
 async function resolveUser(){
