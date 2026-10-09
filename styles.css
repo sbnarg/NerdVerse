@@ -75,3 +75,13 @@ footer{border-top:1px solid var(--line);padding:45px 7vw 25px}.footer-top{displa
 .home-hero:before{display:none}
 @media(max-width:900px){.home-hero{min-height:620px}.home-hero .collector-lair-art{inset:0 0 0 15%;background-position:65% center;opacity:.65;mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.35) 45%,#000 100%);-webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.35) 45%,#000 100%)}}
 @media(max-width:560px){.home-hero{min-height:620px}.home-hero .collector-lair-art{inset:0 0 0 0;opacity:.35;background-position:68% center;mask-image:linear-gradient(to right,transparent,#000 90%);-webkit-mask-image:linear-gradient(to right,transparent,#000 90%)}}
+
+/* Four original collector-category illustrations, with a cinematic black fade for legible labels. */
+.category-grid .category{background-color:#101112;background-repeat:no-repeat;background-size:cover;background-position:center;transition:transform .22s ease,border-color .22s ease}
+.category-grid .category:after{content:"";position:absolute;inset:0;transform:none;opacity:1;background:linear-gradient(180deg,rgba(7,8,9,.75) 0%,rgba(7,8,9,.08) 36%,rgba(7,8,9,.05) 60%,rgba(7,8,9,.88) 100%);pointer-events:none}
+.category-grid .cat-figures{background-image:url("category-figures.svg")}
+.category-grid .cat-diecast{background-image:url("category-diecast.svg")}
+.category-grid .cat-vintage{background-image:url("category-vintage.svg")}
+.category-grid .cat-pop{background-image:url("category-pop.svg")}
+.category-grid .category:hover{transform:translateY(-5px);border-color:var(--accent)}
+.category-grid .category h3{text-shadow:0 2px 15px #000}
