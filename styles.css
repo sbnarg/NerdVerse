@@ -67,3 +67,11 @@ footer{border-top:1px solid var(--line);padding:45px 7vw 25px}.footer-top{displa
 .home-hero:before{display:none}
 @media(max-width:900px){.home-hero{grid-template-columns:1fr;min-height:auto}.home-hero .collector-lair-art{height:min(55vw,420px);background-position:center center;background-size:contain;mask-image:linear-gradient(to bottom,#000 0%,#000 82%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 82%,transparent 100%)}}
 @media(max-width:560px){.home-hero .collector-lair-art{height:54vw;min-height:200px;transform:none;margin:12px 0 0}}
+
+/* Premium hero treatment: original typography untouched, undistorted artwork, deep left-side blend. */
+.home-hero{position:relative;isolation:isolate;background:#080809;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:650px}
+.home-hero .hero-copy{position:relative;z-index:3}
+.home-hero .collector-lair-art{display:block;position:absolute;z-index:1;inset:0 0 0 42%;width:auto;height:100%;min-width:0;margin:0;transform:none;background:#080809 url("nerdverse-hero-art.jpg?v=premium-5") 66% center/cover no-repeat;mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.16) 12%,rgba(0,0,0,.65) 38%,#000 70%);-webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.16) 12%,rgba(0,0,0,.65) 38%,#000 70%)}
+.home-hero:before{display:none}
+@media(max-width:900px){.home-hero{min-height:620px}.home-hero .collector-lair-art{inset:0 0 0 15%;background-position:65% center;opacity:.65;mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.35) 45%,#000 100%);-webkit-mask-image:linear-gradient(to right,transparent 0%,rgba(0,0,0,.35) 45%,#000 100%)}}
+@media(max-width:560px){.home-hero{min-height:620px}.home-hero .collector-lair-art{inset:0 0 0 0;opacity:.35;background-position:68% center;mask-image:linear-gradient(to right,transparent,#000 90%);-webkit-mask-image:linear-gradient(to right,transparent,#000 90%)}}
