@@ -29,7 +29,7 @@ document.getElementById('accountName').textContent=user.user_metadata?.full_name
 document.getElementById('accountEmail').textContent=user.email||'';
 // Show admin entry only after checking the same admin_users role source used by admin-api.
 try{const {data:role,error:roleError}=await NV_AUTH.client.from('admin_users').select('role').eq('id',user.id).maybeSingle();if(!roleError&&role?.role==='admin')document.getElementById('adminEntry').hidden=false;}catch(e){console.warn('Admin entry role check unavailable',e)}
-const {data,error}=await NV_AUTH.client.from('orders').select('id,order_number,status,payment_status,total,tracking_number,tracking_url,created_at,order_items(product_name,quantity,unit_price,total_price)').eq('customer_id',user.id).order('created_at',{ascending:false});
+const {data,error}=await NV_AUTH.client.from('orders').select('id,order_number,status,payment_status,total,tracking_number,created_at,order_items(product_name,quantity,unit_price,total_price)').eq('customer_id',user.id).order('created_at',{ascending:false});
 const el=document.getElementById('orders');
 const safe=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 if(error){console.error('Order history error',error);el.innerHTML='<div class="account-empty"><strong>Orders temporarily unavailable</strong><p>We could not load your order history right now. Please try again shortly.</p><p class="micro-note">Error: '+safe(error.code||'unknown')+' — '+safe(error.message||'Please contact support')+'</p></div>';return;}
