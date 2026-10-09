@@ -52,3 +52,10 @@ footer{border-top:1px solid var(--line);padding:45px 7vw 25px}.footer-top{displa
 .home-hero .collector-lair-art{width:100%;height:510px;min-width:0;overflow:hidden;background:#0b0b0c url("nerdverse-hero-art.jpg?v=2") right center/200% 100% no-repeat;mask-image:linear-gradient(to right,transparent 0%,#000 18%);-webkit-mask-image:linear-gradient(to right,transparent 0%,#000 18%)}
 @media(max-width:900px){.home-hero .collector-lair-art{height:400px;mask-image:linear-gradient(to bottom,#000 0%,#000 80%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 80%,transparent 100%)}}
 @media(max-width:560px){.home-hero .collector-lair-art{height:300px;transform:none;margin-top:0}}
+
+/* Full cinematic hero: display the entire original artwork across the hero. */
+.home-hero{position:relative;isolation:isolate;background:#080809 url("nerdverse-hero-art.jpg?v=3") center center/100% 100% no-repeat;min-height:730px}
+.home-hero .hero-copy{position:relative;z-index:2}
+.home-hero .collector-lair-art{display:none}
+@media(max-width:900px){.home-hero{background-size:cover;background-position:63% center;min-height:650px}.home-hero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,5,6,.96),rgba(5,5,6,.62));z-index:0}}
+@media(max-width:560px){.home-hero{min-height:650px;background-position:64% center}.home-hero:before{background:linear-gradient(90deg,rgba(5,5,6,.95),rgba(5,5,6,.72))}}
