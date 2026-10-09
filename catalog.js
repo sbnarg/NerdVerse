@@ -42,14 +42,15 @@ async function hydrateCatalog(){
   if(!window.supabase||!window.NV_CONFIG)return;
   const client=window.supabase.createClient(window.NV_CONFIG.supabaseUrl,window.NV_CONFIG.supabasePublishableKey);
   const {data,error}=await client.from('products').select('id,name,brand,price,stock,status,description,condition,category_id,image_urls').eq('status','active').order('name');
-  if(error){console.warn('NerdVerse catalogue sync failed',error.message);ACTIVE_CATALOG=[];return}
+  if(error){console.warn('NerdVerse catalogue sync failed',error.message);return}
   const {data:categories}=await client.from('categories').select('id,name');
   const byId=Object.fromEntries((categories||[]).map(c=>[c.id,c.name]));
-  ACTIVE_CATALOG=(data||[]).map(p=>{
-   const legacy=CATALOG.find(c=>c.name===p.name);
-   return {...p,category:byId[p.category_id]||legacy?.category||'Other Collectibles',image:p.image_urls?.[0]||legacy?.image||'',images:Array.isArray(p.image_urls)?p.image_urls:[],stock_qty:p.stock,badge:legacy?.badge||'COLLECTIBLE',tags:legacy?.tags||[],details:legacy?.details||[],series:legacy?.series||'',subcategory:legacy?.subcategory||'',condition:p.condition||legacy?.condition||'',status:Number(p.stock)>0?'available':'sold'};
+  if(!data?.length){console.warn('No public catalogue rows; retaining published fallback catalogue');return}
+  ACTIVE_CATALOG=data.map(p=>{
+   const legacy=CATALOG.find(c=>c.name===p.name||c.id===p.id);
+   return {...p,category:byId[p.category_id]||legacy?.category||'Other Collectibles',image:p.image_urls?.[0]||legacy?.image||'',images:Array.isArray(p.image_urls)?p.image_urls:[],stock_qty:Number(p.stock)||0,badge:legacy?.badge||'COLLECTIBLE',tags:legacy?.tags||[],details:legacy?.details||[],series:legacy?.series||'',subcategory:legacy?.subcategory||'',condition:p.condition||legacy?.condition||'',status:Number(p.stock)>0?'available':'sold'};
   });
- }catch(e){console.warn('Catalogue sync failed',e);ACTIVE_CATALOG=[]}
+ }catch(e){console.warn('Catalogue sync failed',e)}
 }
 
 // Segment detection uses product metadata, never guesses from uploaded photographs.
