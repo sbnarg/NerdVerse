@@ -36,19 +36,20 @@ const CATALOG = [
 function money(n){ return n==null ? 'Price on request' : '₹'+Number(n).toLocaleString('en-IN'); }
 function getProduct(id){ return CATALOG.find(p=>p.id===id); }
 
-let ACTIVE_CATALOG = CATALOG.map(p=>({...p,stock_qty:p.status==='sold'?0:1}));
+let ACTIVE_CATALOG = [];
+window.NV_CATALOG_ERROR = null;
 async function hydrateCatalog(){
  try{
   if(!window.supabase||!window.NV_CONFIG)return;
   const client=window.supabase.createClient(window.NV_CONFIG.supabaseUrl,window.NV_CONFIG.supabasePublishableKey);
-  const {data,error}=await client.from('products').select('id,name,brand,price,stock,status,description,condition,category_id,image_urls').eq('status','active').order('name');
+  const {data,error}=await client.from('products').select('id,name,brand,price,stock,status,description,condition,category_id,image_urls').in('status',['active','sold_out']).order('name');
   if(error){console.error('Public inventory read failed:',error.message);ACTIVE_CATALOG=[];window.NV_CATALOG_ERROR='Inventory temporarily unavailable. Please try again shortly.';return}
   const {data:categories}=await client.from('categories').select('id,name');
   const byId=Object.fromEntries((categories||[]).map(c=>[c.id,c.name]));
   if(!data?.length){console.error('Public inventory query returned zero active rows. Check product status and public read policy.');ACTIVE_CATALOG=[];window.NV_CATALOG_ERROR='Inventory temporarily unavailable. Please try again shortly.';return}
   ACTIVE_CATALOG=data.map(p=>{
    const legacy=CATALOG.find(c=>c.name===p.name||c.id===p.id);
-   return {...p,category:byId[p.category_id]||legacy?.category||'Other Collectibles',image:p.image_urls?.[0]||legacy?.image||'',images:Array.isArray(p.image_urls)?p.image_urls:[],stock_qty:Number(p.stock)||0,badge:legacy?.badge||'COLLECTIBLE',tags:legacy?.tags||[],details:legacy?.details||[],series:legacy?.series||'',subcategory:legacy?.subcategory||'',condition:p.condition||legacy?.condition||'',status:Number(p.stock)>0?'available':'sold'};
+   return {...p,category:byId[p.category_id]||legacy?.category||'Other Collectibles',image:p.image_urls?.[0]||legacy?.image||'',images:Array.isArray(p.image_urls)?p.image_urls:[],stock_qty:Number(p.stock)||0,badge:legacy?.badge||'COLLECTIBLE',tags:legacy?.tags||[],details:legacy?.details||[],series:legacy?.series||'',subcategory:legacy?.subcategory||'',condition:p.condition||legacy?.condition||'',status:p.status==='sold_out'||Number(p.stock)<=0?'sold':'available'};
   });
  }catch(e){console.error('Catalogue sync failed',e);ACTIVE_CATALOG=[];window.NV_CATALOG_ERROR='Inventory temporarily unavailable. Please try again shortly.'}
 }
