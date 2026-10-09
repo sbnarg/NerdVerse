@@ -85,3 +85,14 @@ footer{border-top:1px solid var(--line);padding:45px 7vw 25px}.footer-top{displa
 .category-grid .cat-pop{background-image:url("category-pop.svg")}
 .category-grid .category:hover{transform:translateY(-5px);border-color:var(--accent)}
 .category-grid .category h3{text-shadow:0 2px 15px #000}
+
+/* Cinematic category photography: original HTML labels and links stay interactive. */
+.category-grid .category{background-color:#0b0b0c;background-size:cover;background-position:center;background-repeat:no-repeat;min-height:380px;isolation:isolate}
+.category-grid .cat-figures{background-image:url("category-figures-cinematic.jpg")}
+.category-grid .cat-diecast{background-image:url("category-diecast-cinematic.jpg")}
+.category-grid .cat-vintage{background-image:url("category-vintage-cinematic.jpg")}
+.category-grid .cat-pop{background-image:url("category-pop-cinematic.jpg")}
+.category-grid .category:after{inset:0;opacity:1;transform:none;background:linear-gradient(180deg,rgba(6,6,8,.9) 0%,rgba(6,6,8,.26) 35%,rgba(6,6,8,.06) 62%,rgba(6,6,8,.87) 100%)}
+.category-grid .category h3{text-shadow:0 3px 14px #000,0 1px 4px #000}
+.category-grid .category b{text-shadow:0 2px 8px #000}
+@media(max-width:560px){.category-grid .category{min-height:420px}}
