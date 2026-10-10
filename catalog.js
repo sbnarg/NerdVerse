@@ -63,6 +63,7 @@ async function hydrateCatalog(){
    const legacy=CATALOG.find(x=>x.name===p.name||x.id===p.id);
    return {...p,category:byId[p.category_id]||legacy?.category||'Other Collectibles',image:p.image_urls?.[0]||legacy?.image||'',images:Array.isArray(p.image_urls)?p.image_urls:[],stock_qty:Number(p.stock)||0,badge:legacy?.badge||'COLLECTIBLE',tags:legacy?.tags||[],details:legacy?.details||[],series:legacy?.series||'',subcategory:legacy?.subcategory||'',condition:p.condition||legacy?.condition||'',status:p.status==='sold_out'||Number(p.stock)<=0?'sold':'available'};
   });
+  try{sessionStorage.setItem('nv-last-public-catalog',JSON.stringify({time:Date.now(),products:ACTIVE_CATALOG}))}catch(_e){}
  }catch(e){
   console.error('NerdVerse public inventory failed',e);
   ACTIVE_CATALOG=[];
