@@ -43,7 +43,7 @@ async function hydrateCatalog(){
  try{
   const config=window.NV_CONFIG;
   if(!config?.supabaseUrl||!config?.supabasePublishableKey)throw new Error('Storefront database configuration is missing');
-  const base=config.supabaseUrl.replace(/\\/$/,'')+'/rest/v1/';
+  const base=config.supabaseUrl.replace(/[/]+$/,'')+'/rest/v1/';
   const headers={apikey:config.supabasePublishableKey,Accept:'application/json'};
   async function read(path){
    const controller=new AbortController();
