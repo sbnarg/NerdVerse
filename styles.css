@@ -119,3 +119,10 @@ footer{border-top:1px solid var(--line);padding:45px 7vw 25px}.footer-top{displa
 
 /* Accessible hover, focus and touch dropdowns */
 .site-header nav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px}.nv-nav-item{position:relative;display:flex;align-items:center}.nv-nav-item>a{white-space:nowrap;font-size:12px}.nv-dropdown{position:absolute;top:100%;left:0;min-width:205px;z-index:1000;display:none;flex-direction:column;padding:9px 0;background:#171a17;border:1px solid #52613a;border-radius:9px;box-shadow:0 14px 32px #0009}.nv-dropdown a{display:block!important;padding:11px 17px!important;color:#f3f4ec!important;text-decoration:none!important;white-space:nowrap}.nv-dropdown a:hover,.nv-dropdown a:focus-visible{background:#354329;color:#b6ed44!important}.nv-nav-item:hover>.nv-dropdown,.nv-nav-item:focus-within>.nv-dropdown,.nv-nav-item.nv-open>.nv-dropdown{display:flex}.nv-nav-item>a span{display:none}@media(max-width:850px){.site-header nav{overflow:visible}.nv-dropdown{min-width:170px;max-width:90vw}}
+
+/* Keep cart checkout reachable on small mobile browsers and in-app webviews. */
+.drawer{height:100vh;height:100dvh;box-sizing:border-box;max-height:100dvh;padding-bottom:max(20px,env(safe-area-inset-bottom));overflow:hidden}
+.drawer .cart-items{min-height:0;flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.drawer .cart-total{flex:0 0 auto;padding:12px 0}
+.drawer>a.btn{flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-height:48px;margin-bottom:0}
+@media(max-width:560px){.drawer{padding:18px 20px max(20px,env(safe-area-inset-bottom));width:100%;}.drawer-head h2{font-size:32px}}
