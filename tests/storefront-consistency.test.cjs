@@ -38,3 +38,6 @@ for (const file of ['catalog.js','script.js','config.js']) {
     execFileSync(process.execPath, ['--check', file], {stdio:'pipe'});
   });
 }
+
+test('cart handles invalid stored data and renders untrusted names as text',()=>{const app=fs.readFileSync('script.js','utf8');assert.match(app,/function readCart\(\)/);assert.match(app,/catch\{return \[\]\}/);assert.match(app,/name\.textContent=x\.name/);assert.doesNotMatch(app,/onclick="removeFromCart/)});
+test('product cards escape untrusted fields and avoid inline add-to-cart handlers',()=>{const app=fs.readFileSync('script.js','utf8');assert.match(app,/escapeCartText\(p\.name\)/);assert.match(app,/data-cart-id=/);assert.doesNotMatch(app,/onclick="addToCart/)});
