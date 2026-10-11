@@ -13,7 +13,7 @@ for (const file of pages) {
     const cat = html.match(/src="catalog\.js([^"]*)"/);
     const app = html.match(/src="script\.js([^"]*)"/);
     assert.equal(cat[1], app[1], 'Catalogue and app must share cache version');
-    assert.doesNotMatch(html, /renderGrid\([^;]*CATALOG\.filter\(/, 'Never render legacy stock');
+    assert.doesNotMatch(html, /renderGrid\([^;]*\bCATALOG\.filter\(/, 'Never render legacy stock');
   });
 }
 for (const file of ['index.html','rare.html','action-figures.html','die-cast.html','vintage.html','pop-culture.html']) {
@@ -41,3 +41,23 @@ for (const file of ['catalog.js','script.js','config.js']) {
 
 test('cart handles invalid stored data and renders untrusted names as text',()=>{const app=fs.readFileSync('script.js','utf8');assert.match(app,/function readCart\(\)/);assert.match(app,/catch\{return \[\]\}/);assert.match(app,/name\.textContent=x\.name/);assert.doesNotMatch(app,/onclick="removeFromCart/)});
 test('product cards escape untrusted fields and avoid inline add-to-cart handlers',()=>{const app=fs.readFileSync('script.js','utf8');assert.match(app,/escapeCartText\(p\.name\)/);assert.match(app,/data-cart-id=/);assert.doesNotMatch(app,/onclick="addToCart/)});
+
+test('legacy-stock guard distinguishes the live catalogue from the seed catalogue',()=>{
+ const pattern=/renderGrid\([^;]*\bCATALOG\.filter\(/;
+ assert.match("renderGrid('grid',CATALOG.filter(p=>p.stock))",pattern);
+ assert.doesNotMatch("renderGrid('grid',ACTIVE_CATALOG.filter(p=>p.stock))",pattern);
+});
+test('product detail escapes hostile content and wires a working cart button',()=>{
+ const vm=require('node:vm');let click,added;const id="toy'\"<id>";
+ const button={dataset:{cartId:id},addEventListener:(event,fn)=>{assert.equal(event,'click');click=fn}};
+ const el={innerHTML:'',querySelectorAll:selector=>selector==='[data-cart-id]'?[button]:[]};
+ const context={URL,URLSearchParams,location:{href:'https://nerdverseindia.com/product.html',search:'?id='+encodeURIComponent(id)},localStorage:{getItem:()=>null},document:{addEventListener:()=>{},getElementById:()=>el},window:{},ACTIVE_CATALOG:[{id,name:'<img src=x onerror=alert(1)>',brand:null,category:'<category>',price:199,stock_qty:1,status:'available',image:'javascript:alert(1)',images:['javascript:alert(1)','https://example.com/a.png?x=1&y=2'],condition:'<condition>',description:'<script>bad()</script>',tags:['<tag>'],details:['<detail>']} ]};
+ vm.createContext(context);vm.runInContext(fs.readFileSync('script.js','utf8'),context);context.addToCart=value=>{added=value};context.renderProductPage();
+ assert.match(el.innerHTML,/&lt;script&gt;bad\(\)&lt;\/script&gt;/);
+ assert.match(el.innerHTML,/&lt;tag&gt;/);assert.match(el.innerHTML,/&lt;detail&gt;/);
+ assert.doesNotMatch(el.innerHTML,/<script>|javascript:|onclick=|onerror="/);
+ assert.match(el.innerHTML,/data-cart-id="toy&#39;&quot;&lt;id&gt;"/);
+ assert.match(el.innerHTML,/x=1&amp;y=2/);click();assert.equal(added,id);
+ assert.equal(context.productImageUrl('javascript:bad()'),'');
+ assert.equal(context.productImageUrl('https://example.com/a?x=1&y=2'),'https://example.com/a?x=1&y=2');
+});
