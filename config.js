@@ -1,5 +1,5 @@
 // Public browser configuration. Replace the placeholders with your Supabase project's
-// publishable URL/key. Never put Razorpay secret keys, Resend keys, or Supabase secret
+// publishable URL/key. Never put PayU merchant salt, Resend keys, or Supabase secret
 // keys in this file.
 window.NV_CONFIG = {
   supabaseUrl: 'https://hzzuqylaypoylakgnqxs.supabase.co',
