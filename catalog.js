@@ -61,7 +61,14 @@ async function hydrateCatalog(){
   const byId=Object.fromEntries(categories.map(x=>[x.id,x.name]));
   ACTIVE_CATALOG=data.map(p=>{
    const legacy=CATALOG.find(x=>x.name===p.name||x.id===p.id);
-   return {...p,category:byId[p.category_id]||legacy?.category||'Other Collectibles',image:p.image_urls?.[0]||legacy?.image||'',images:Array.isArray(p.image_urls)?p.image_urls:[],stock_qty:Number(p.stock)||0,badge:legacy?.badge||'COLLECTIBLE',tags:legacy?.tags||[],details:legacy?.details||[],series:legacy?.series||'',subcategory:legacy?.subcategory||'',condition:p.condition||legacy?.condition||'',status:p.status==='sold_out'||Number(p.stock)<=0?'sold':'available'};
+   const sourceCategory=byId[p.category_id]||legacy?.category||'Other Collectibles';
+   const segment=nvDetectSegment(p);
+   const category=sourceCategory==='G.I. Joe'?'Action Figures':sourceCategory;
+   const explicitTags=(String(p.description||'').match(/Collectible tags:\s*([^\n]+)/i)?.[1]||'').split(',').map(t=>t.trim().replace(/\.$/,'')).filter(Boolean);
+   const vintage=p.condition==='Vintage'||explicitTags.includes('Vintage')||(legacy?.tags||[]).includes('Vintage');
+   const tags=[...new Set([...explicitTags,...(legacy?.tags||[]),p.brand,segment,category==='Action Figures'?'Action Figure':'',vintage?'Vintage':''].filter(Boolean))];
+   const badge=explicitTags.includes('Rare')?'RARE':vintage?'VINTAGE':legacy?.badge||'COLLECTIBLE';
+   return {...p,category,image:p.image_urls?.[0]||legacy?.image||'',images:Array.isArray(p.image_urls)?p.image_urls:[],stock_qty:Number(p.stock)||0,badge,tags,details:legacy?.details||[],series:legacy?.series||'',subcategory:legacy?.subcategory||'',condition:p.condition||legacy?.condition||'',status:p.status==='sold_out'||Number(p.stock)<=0?'sold':'available'};
   });
   try{sessionStorage.setItem('nv-last-public-catalog',JSON.stringify({time:Date.now(),products:ACTIVE_CATALOG}))}catch(_e){}
  }catch(e){
