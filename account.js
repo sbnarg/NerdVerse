@@ -28,18 +28,12 @@ async function resolveUser(){
 }
 
 const user=await resolveUser();
-if(new URLSearchParams(location.search).has('code')&&!user){return;}
+if((new URLSearchParams(location.search).has('code')||new URLSearchParams(location.search).has('token_hash')||location.hash.includes('access_token='))&&!user){return;}
 if(!user){gate.hidden=false;panel.hidden=true;return;}
 gate.hidden=true;panel.hidden=false;
 document.getElementById('accountName').textContent=user.user_metadata?.full_name||user.email;
 document.getElementById('accountEmail').textContent=user.email||'';
-const profileName=document.getElementById('profileName');
-const profileEmail=document.getElementById('profileEmail');
-const profileJoined=document.getElementById('profileJoined');
-if(profileName)profileName.textContent=user.user_metadata?.full_name||user.user_metadata?.name||'Collector';
-if(profileEmail)profileEmail.textContent=user.email||'Not provided';
-if(profileJoined)profileJoined.textContent=user.created_at?new Date(user.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}):'—';
-if(location.hash==='#profile')document.getElementById('profileDetails')?.scrollIntoView({block:'start'});
+
 // Show admin entry only after checking the same admin_users role source used by admin-api.
 try{const {data:{session:currentSession}}=await NV_AUTH.client.auth.getSession();if(currentSession){const response=await fetch(NV_CONFIG.supabaseUrl+'/functions/v1/admin-api',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+currentSession.access_token},body:JSON.stringify({action:'whoami'})});if(response.ok){const role=await response.json();if(role.is_admin)document.getElementById('adminEntry').hidden=false;}}}catch(e){console.warn('Admin entry check unavailable',e)}
 const {data,error}=await NV_AUTH.client.from('orders').select('id,order_number,status,payment_status,total,tracking_number,created_at,order_items(product_name,quantity,unit_price,total_price)').eq('customer_id',user.id).order('created_at',{ascending:false});
