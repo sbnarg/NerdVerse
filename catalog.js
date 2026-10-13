@@ -40,6 +40,8 @@ let ACTIVE_CATALOG = [];
 window.NV_CATALOG_ERROR = null;
 async function hydrateCatalog(){
  window.NV_CATALOG_ERROR=null;
+ const cached=(()=>{try{const v=JSON.parse(sessionStorage.getItem('nv-last-public-catalog')||'null');return v&&Array.isArray(v.products)&&Date.now()-v.time<15*60*1000?v.products:null}catch{return null}})();
+ if(cached){ACTIVE_CATALOG=cached;return;}
  try{
   const config=window.NV_CONFIG;
   if(!config?.supabaseUrl||!config?.supabasePublishableKey)throw new Error('Storefront database configuration is missing');
@@ -47,17 +49,16 @@ async function hydrateCatalog(){
   const headers={apikey:config.supabasePublishableKey,Accept:'application/json'};
   async function read(path){
    const controller=new AbortController();
-   const timeout=setTimeout(()=>controller.abort(),12000);
+   const timeout=setTimeout(()=>controller.abort(),6500);
    try{
-    const response=await fetch(base+path,{headers,signal:controller.signal,cache:'no-store'});
+    const response=await fetch(base+path,{headers,signal:controller.signal,cache:'default'});
     if(!response.ok)throw new Error('Inventory HTTP '+response.status+': '+(await response.text()).slice(0,180));
     return await response.json();
    }finally{clearTimeout(timeout)}
   }
-  const data=await read('products?select=id,name,brand,price,stock,status,description,condition,category_id,image_urls&status=in.(active,sold_out)&order=name.asc');
+  const [data,categoriesResult]=await Promise.all([read('products?select=id,name,brand,price,stock,status,description,condition,category_id,image_urls&status=in.(active,sold_out)&order=name.asc'),read('categories?select=id,name').catch(e=>{console.warn('Category names unavailable',e);return []})]);
   if(!Array.isArray(data)||!data.length)throw new Error('No public product records returned. Check storefront SELECT permissions.');
-  let categories=[];
-  try{categories=await read('categories?select=id,name')}catch(e){console.warn('Category names unavailable',e)}
+  const categories=categoriesResult;
   const byId=Object.fromEntries(categories.map(x=>[x.id,x.name]));
   ACTIVE_CATALOG=data.map(p=>{
    const legacy=CATALOG.find(x=>x.name===p.name||x.id===p.id);
@@ -73,7 +74,7 @@ async function hydrateCatalog(){
   try{sessionStorage.setItem('nv-last-public-catalog',JSON.stringify({time:Date.now(),products:ACTIVE_CATALOG}))}catch(_e){}
  }catch(e){
   console.error('NerdVerse public inventory failed',e);
-  ACTIVE_CATALOG=[];
+  ACTIVE_CATALOG=cached||[];
   window.NV_CATALOG_ERROR='Live inventory is temporarily unavailable. Please try again shortly.';
  }
 }
