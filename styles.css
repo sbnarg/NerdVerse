@@ -126,3 +126,23 @@ footer{border-top:1px solid var(--line);padding:45px 7vw 25px}.footer-top{displa
 .drawer .cart-total{flex:0 0 auto;padding:12px 0}
 .drawer>a.btn{flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-height:48px;margin-bottom:0}
 @media(max-width:560px){.drawer{padding:18px 20px max(20px,env(safe-area-inset-bottom));width:100%;}.drawer-head h2{font-size:32px}}
+
+/* Product image hover zoom: transform only, clipped to the photo frame. */
+@media (hover:hover) and (pointer:fine) {
+  .product-image-wrap > img,
+  .nv-photo-stage > #nvMainProductPhoto {
+    transition:transform .28s ease;
+    transform-origin:center;
+  }
+  .product-image-wrap:hover > img,
+  .product-image-wrap:focus-visible > img {
+    transform:scale(1.14);
+  }
+  .nv-photo-stage { overflow:hidden; }
+  .nv-photo-stage > #nvMainProductPhoto { cursor:zoom-in; }
+  .nv-photo-stage > #nvMainProductPhoto:hover { transform:scale(1.65); }
+}
+@media (prefers-reduced-motion:reduce) {
+  .product-image-wrap > img,
+  .nv-photo-stage > #nvMainProductPhoto { transition:none; }
+}
