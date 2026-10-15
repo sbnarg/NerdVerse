@@ -50,9 +50,21 @@ test('legacy-stock guard distinguishes the live catalogue from the seed catalogu
 test('product detail escapes hostile content and wires a working cart button',()=>{
  const vm=require('node:vm');let click,added;const id="toy'\"<id>";
  const button={dataset:{cartId:id},addEventListener:(event,fn)=>{assert.equal(event,'click');click=fn}};
- const el={innerHTML:'',querySelectorAll:selector=>selector==='[data-cart-id]'?[button]:[]};
- const context={URL,URLSearchParams,location:{href:'https://nerdverseindia.com/product.html',search:'?id='+encodeURIComponent(id)},localStorage:{getItem:()=>null},document:{addEventListener:()=>{},getElementById:()=>el},window:{},ACTIVE_CATALOG:[{id,name:'<img src=x onerror=alert(1)>',brand:null,category:'<category>',price:199,stock_qty:1,status:'available',image:'javascript:alert(1)',images:['javascript:alert(1)','https://example.com/a.png?x=1&y=2'],condition:'<condition>',description:'<script>bad()</script>',tags:['<tag>'],details:['<detail>']} ]};
+ const mainPhoto={src:''};
+ const thumbs=[0,1].map(index=>({dataset:{photoIndex:String(index)},style:{},attributes:{},addEventListener(event,fn){this.click=fn},setAttribute(name,value){this.attributes[name]=value}}));
+ const arrows=[-1,1].map(step=>({dataset:{photoStep:String(step)},addEventListener(event,fn){this.click=fn}}));
+ const el={innerHTML:'',querySelector:selector=>selector==='#nvMainProductPhoto'?mainPhoto:null,querySelectorAll:selector=>selector==='[data-cart-id]'?[button]:selector==='[data-photo-index]'?thumbs:selector==='[data-photo-step]'?arrows:[]};
+ const appendedScripts=[];
+ const document={addEventListener:()=>{},getElementById:()=>el,querySelector:()=>null,createElement:()=>({dataset:{}}),head:{append:node=>appendedScripts.push(node)}};
+ const context={URL,URLSearchParams,location:{href:'https://nerdverseindia.com/product.html',search:'?id='+encodeURIComponent(id)},localStorage:{getItem:()=>null},document,window:{},ACTIVE_CATALOG:[{id,name:'<img src=x onerror=alert(1)>',brand:null,category:'<category>',price:199,stock_qty:1,status:'available',image:'javascript:alert(1)',images:['javascript:alert(1)','https://example.com/a.png?x=1&y=2'],condition:'<condition>',description:'<script>bad()</script>',tags:['<tag>'],details:['<detail>']} ]};
  vm.createContext(context);vm.runInContext(fs.readFileSync('script.js','utf8'),context);context.addToCart=value=>{added=value};context.renderProductPage();
+ assert.equal(appendedScripts.length,1,'Profile script is still loaded');
+ assert.match(appendedScripts[0].src,/^user-profile\.js/);
+ assert.equal(mainPhoto.src,'','Unsafe initial photo URL is rejected');
+ assert.equal(thumbs[0].attributes['aria-pressed'],'true');
+ arrows[1].click();assert.equal(mainPhoto.src,'https://example.com/a.png?x=1&y=2');
+ assert.equal(thumbs[1].attributes['aria-pressed'],'true');
+ thumbs[0].click();assert.equal(mainPhoto.src,'');
  assert.match(el.innerHTML,/&lt;script&gt;bad\(\)&lt;\/script&gt;/);
  assert.match(el.innerHTML,/&lt;tag&gt;/);assert.match(el.innerHTML,/&lt;detail&gt;/);
  assert.doesNotMatch(el.innerHTML,/<script>|javascript:|onclick=|onerror="/);
