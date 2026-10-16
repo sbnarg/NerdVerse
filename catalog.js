@@ -41,7 +41,7 @@ window.NV_CATALOG_ERROR = null;
 async function hydrateCatalog(){
  window.NV_CATALOG_ERROR=null;
  const cached=(()=>{try{const v=JSON.parse(sessionStorage.getItem('nv-last-public-catalog')||'null');return v&&Array.isArray(v.products)&&Date.now()-v.time<15*60*1000?v.products:null}catch{return null}})();
- if(cached){ACTIVE_CATALOG=cached;return;}
+ // Cached inventory is a fallback only; every page load checks current stock and listings.
  try{
   const config=window.NV_CONFIG;
   if(!config?.supabaseUrl||!config?.supabasePublishableKey)throw new Error('Storefront database configuration is missing');
@@ -51,7 +51,7 @@ async function hydrateCatalog(){
    const controller=new AbortController();
    const timeout=setTimeout(()=>controller.abort(),6500);
    try{
-    const response=await fetch(base+path,{headers,signal:controller.signal,cache:'default'});
+    const response=await fetch(base+path,{headers,signal:controller.signal,cache:'no-store'});
     if(!response.ok)throw new Error('Inventory HTTP '+response.status+': '+(await response.text()).slice(0,180));
     return await response.json();
    }finally{clearTimeout(timeout)}
