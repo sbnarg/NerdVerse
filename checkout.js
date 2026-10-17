@@ -1,5 +1,5 @@
-/* PayU migration preparation. Payments stay disabled until PayU production approval,
-   server-side payment initiation, hash validation and webhook verification are tested. */
+/* PhonePe migration preparation. Payments stay disabled until PhonePe production approval,
+   server-side payment initiation, payment status validation and webhook verification are tested. */
 const NV_CHECKOUT_LIVE = false;
 const cart = JSON.parse(localStorage.getItem('nv-cart') || '[]');
 const money = n => '₹' + Number(n || 0).toLocaleString('en-IN');
@@ -12,6 +12,6 @@ const msg = document.getElementById('checkoutMsg');
 const payButton = document.querySelector('#checkoutForm button[type=submit]');
 payButton.disabled = true;
 payButton.setAttribute('aria-disabled', 'true');
-msg.textContent = 'PayU checkout is being configured. Payments are not yet available.';
-// Never accept payment details or create orders in the browser before the PayU
+msg.textContent = 'PhonePe payment setup and merchant verification are in progress. Payments are not yet available.';
+// Never accept payment details or create orders in the browser before the PhonePe
 // server-side flow has been deployed, reviewed and enabled explicitly.
