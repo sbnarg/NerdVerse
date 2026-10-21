@@ -126,3 +126,11 @@ footer{border-top:1px solid var(--line);padding:45px 7vw 25px}.footer-top{displa
 .drawer .cart-total{flex:0 0 auto;padding:12px 0}
 .drawer>a.btn{flex:0 0 auto;display:flex;align-items:center;justify-content:center;min-height:48px;margin-bottom:0}
 @media(max-width:560px){.drawer{padding:18px 20px max(20px,env(safe-area-inset-bottom));width:100%;}.drawer-head h2{font-size:32px}}
+
+/* New Posters category: floating badge, readable with reduced motion. */
+.site-header nav a.nv-posters-link{position:relative;display:inline-flex;align-items:center;overflow:visible}
+.nv-new-badge{position:absolute;left:50%;top:-15px;transform:translateX(-50%);pointer-events:none;background:#d8ff3e;color:#101010;border-radius:4px;padding:2px 5px;font:800 9px/1.1 Inter,sans-serif;letter-spacing:.7px;box-shadow:0 0 10px #d8ff3e66;animation:nv-new-float 1.8s ease-in-out infinite}
+.nv-new-badge::after{content:"";position:absolute;left:50%;bottom:-3px;transform:translateX(-50%);border-left:3px solid transparent;border-right:3px solid transparent;border-top:3px solid #d8ff3e}
+.nv-posters-link:hover .nv-new-badge,.nv-posters-link:focus-visible .nv-new-badge{box-shadow:0 0 15px #d8ff3eaa}
+@keyframes nv-new-float{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-4px)}}
+@media(prefers-reduced-motion:reduce){.nv-new-badge{animation:none}}
