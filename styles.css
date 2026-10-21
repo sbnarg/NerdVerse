@@ -134,3 +134,6 @@ footer{border-top:1px solid var(--line);padding:45px 7vw 25px}.footer-top{displa
 .nv-posters-link:hover .nv-new-badge,.nv-posters-link:focus-visible .nv-new-badge{box-shadow:0 0 15px #d8ff3eaa}
 @keyframes nv-new-float{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-4px)}}
 @media(prefers-reduced-motion:reduce){.nv-new-badge{animation:none}}
+
+/* Product-image save deterrents; screenshots and direct file access remain possible. */
+.product-image-wrap img,.product-detail-image img,.nv-product-thumbnails img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}

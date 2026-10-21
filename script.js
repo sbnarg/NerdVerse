@@ -21,3 +21,11 @@ document.addEventListener('DOMContentLoaded',async()=>{setupCommon();if(!window.
 
 // Customer profile button beside the cart, shared across storefront pages.
 (function(){if(document.querySelector('script[data-nv-user-profile]'))return;const x=document.createElement('script');x.src='user-profile.js?v=20261013-v3';x.dataset.nvUserProfile='1';document.head.append(x)})();
+
+// Discourage casual saving of storefront product images without blocking navigation.
+(function(){
+ const productImageSelector='.product-image-wrap img,.product-detail-image img,.nv-product-thumbnails img';
+ function isProductImage(target){return target instanceof Element&&!!target.closest(productImageSelector)}
+ document.addEventListener('contextmenu',event=>{if(isProductImage(event.target))event.preventDefault()});
+ document.addEventListener('dragstart',event=>{if(isProductImage(event.target))event.preventDefault()});
+})();
