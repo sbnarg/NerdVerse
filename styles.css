@@ -137,3 +137,23 @@ footer{border-top:1px solid var(--line);padding:45px 7vw 25px}.footer-top{displa
 
 /* Product-image save deterrents; screenshots and direct file access remain possible. */
 .product-image-wrap img,.product-detail-image img,.nv-product-thumbnails img{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;-webkit-user-drag:none}
+
+/* Temporarily hide empty collection links (live catalogue checked 22 Oct 2026).
+   Keep the underlying pages and inventory intact for a later relaunch. */
+a[href="shop.html?category=Apparels"],
+a[href="shop.html?category=Caps%20%26%20Headgear"],
+a[href="shop.html?category=Pop%20Culture"],
+a[href="shop.html?category=Vintage"],
+a[href="pop-culture.html"],
+a[href="shop.html?segment=Mini%20GT"],
+a[href="shop.html?segment=Tomica"],
+a[href="shop.html?segment=Marvel"],
+a[href="shop.html?segment=DC"],
+a[href="shop.html?segment=Transformers"],
+a[href="shop.html?segment=Star%20Wars"],
+a[href="shop.html?segment=Matchbox"],
+a[href="shop.html?segment=Majorette"],
+a[href="shop.html?segment=LEGO"],
+a[href="shop.html?segment=McFarlane"],
+.filter[data-filter="Vintage"],
+.filter[data-filter="Pop Culture"]{display:none!important}
