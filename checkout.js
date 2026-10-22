@@ -81,13 +81,20 @@
       }
       if (result.state === 'FAILED') {
         msg.textContent = 'PhonePe confirmed that this payment failed. Your payment was not accepted. Return to your cart to try again.';
-        button.textContent = 'Payment failed';
+        button.textContent = 'Return to checkout';
+        button.type = 'button';
+        button.onclick = () => location.assign('checkout.html' + (environment === 'sandbox' ? '?sandbox=1' : ''));
+        setEnabled(true);
         sessionStorage.removeItem('nv-phonepe-attempt'); return;
       }
       msg.textContent = 'Payment is pending with PhonePe. Please do not pay again.';
       if (attempt < 9) await new Promise(resolve => setTimeout(resolve, 3000));
     }
-    msg.textContent = 'Payment is still pending. Please do not pay again. Refresh this page later to check its status.';
+    msg.textContent = 'PhonePe has not confirmed this attempt yet. Do not start another payment. Click below to check again; once PhonePe closes the attempt, you can return to checkout.';
+    button.type = 'button';
+    button.textContent = 'Check payment status';
+    button.onclick = () => checkStatus(id);
+    setEnabled(true);
   }
   try {
     user = await bounded(window.NV_AUTH?.user());
@@ -129,7 +136,7 @@
         sessionStorage.setItem(`nv-phonepe-cart/${payment.session_id}`, JSON.stringify(cart.map(x => ({ id: x.id, qty: x.qty }))));
         if (payment.redirect_url) {
           const target = new URL(payment.redirect_url);
-          if (target.protocol !== 'https:' || target.hostname !== (environment === 'sandbox' ? 'mercury-uat.phonepe.com' : 'mercury.phonepe.com') || target.username || target.password || target.port) throw Error('Unable to open secure PhonePe checkout.');
+          if (target.protocol !== 'https:' || !(environment === 'sandbox' ? ['mercury-uat.phonepe.com'] : ['mercury.phonepe.com', 'mercury-t2.phonepe.com']).includes(target.hostname) || target.username || target.password || target.port) throw Error('Unable to open secure PhonePe checkout.');
           location.assign(target.href);
         } else {
           history.replaceState({}, '', `checkout.html?payment_session=${encodeURIComponent(payment.session_id)}${environment === 'sandbox' ? '&sandbox=1' : ''}`);

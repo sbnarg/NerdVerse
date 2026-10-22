@@ -57,8 +57,8 @@ export function createPhonePeClient(config: Config, request: typeof fetch = fetc
         throw new Error('Invalid PhonePe checkout response');
       }
       const paymentUrl = new URL(data.redirectUrl);
-      const allowedHost = sandbox ? 'mercury-uat.phonepe.com' : 'mercury.phonepe.com';
-      if (paymentUrl.protocol !== 'https:' || paymentUrl.hostname !== allowedHost ||
+      const allowedHosts = sandbox ? ['mercury-uat.phonepe.com'] : ['mercury.phonepe.com', 'mercury-t2.phonepe.com'];
+      if (paymentUrl.protocol !== 'https:' || !allowedHosts.includes(paymentUrl.hostname) ||
           paymentUrl.username || paymentUrl.password || paymentUrl.port) throw new Error('Invalid PhonePe checkout URL');
       return { providerOrderId: data.orderId, redirectUrl: paymentUrl.href };
     },

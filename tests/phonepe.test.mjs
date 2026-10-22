@@ -55,3 +55,13 @@ test('production uses production endpoints and failures do not leak secrets', as
   assert.equal(urls[0],'https://api.phonepe.com/apis/identity-manager/v1/oauth/token');
   assert.match(urls[1],/^https:\/\/api.phonepe.com\/apis\/pg\/checkout/);
 });
+
+
+test('production accepts both exact PhonePe checkout hosts and rejects lookalikes', async () => {
+ for (const host of ['mercury.phonepe.com','mercury-t2.phonepe.com','mercury-t2.phonepe.com.evil.example','mercury-uat.phonepe.com']) {
+  const client=createPhonePeClient({...config,environment:'production'},async url=>json(url.endsWith('/token') ? {access_token:'test',expires_at:Math.floor(Date.now()/1000)+3600} : {orderId:'OMO123',redirectUrl:`https://${host}/transact/pgv2?token=fixture`}));
+  const attempt=client.createPayment('NV-123',100,'https://nerdverseindia.com/checkout.html');
+  if (['mercury.phonepe.com','mercury-t2.phonepe.com'].includes(host)) assert.match((await attempt).redirectUrl,/phonepe.com/);
+  else await assert.rejects(attempt);
+ }
+});
