@@ -1,4 +1,5 @@
 import { createPhonePeClient } from './phonepe.ts';
+import { orderConfirmationEmail } from './email.ts';
 const SITE = 'https://nerdverseindia.com';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const cors = { 'Access-Control-Allow-Origin': SITE, 'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Vary': 'Origin' };
@@ -56,8 +57,8 @@ export function createPhonePeService(deps: Dependencies) {
       try {
         const s = await loadSession(row.session_id);
         if (!s || s.environment !== 'production' || s.state !== 'COMPLETED') continue;
-        const mail = await deps.sendEmail(s.customer.email, 'NerdVerse India — Payment confirmed',
-          `<div style="font-family:Arial,sans-serif"><h1>NerdVerse India</h1><h2>Payment confirmed</h2><p>Order ${s.merchant_order_id}</p><p>Total: ₹${Number(s.total).toFixed(2)}</p><p><a href="${SITE}/account.html">View your order</a></p></div>`, `phonepe-paid/${s.id}`);
+        const mail = await deps.sendEmail(s.customer.email, 'NerdVerse India — Order confirmed and payment receipt',
+          orderConfirmationEmail(s), `phonepe-paid/${s.id}`);
         if (mail?.skipped) check(await db.from('nv_phonepe_email_queue').update({last_error:mail.reason||'email_not_configured'}).eq('session_id',s.id));
         else check(await db.from('nv_phonepe_email_queue').update({ sent_at: new Date().toISOString(), attempts: row.attempts + 1, provider_id:mail?.id||null, last_error:null }).eq('session_id', s.id));
       } catch (e) {

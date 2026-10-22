@@ -47,13 +47,14 @@ claim that the whole business is fully launch verified.
 - Narrow-screen CSS fixes cover navigation wrapping, 44px touch controls, readable
   form inputs and long order references. This browser could not perform mobile
   preview, so no real-device approval is claimed.
-- Automated suite: 46 tests pass; TypeScript covers checkout, webhook and admin API.
+- Automated suite: 47 tests pass; TypeScript covers checkout, webhook and admin API.
 
 ## Account/physical tasks still required
 
-1. In Supabase Edge Function secrets, add `RESEND_API_KEY` and `EMAIL_FROM` using a
-   sender on a Resend-verified domain. Suggested sender after domain verification:
-   `NerdVerse India <orders@nerdverseindia.com>`. Never commit or send the API key
+1. In Supabase Edge Function secrets, add `RESEND_API_KEY` and verify the
+   `nerdverseindia.com` sending domain in Resend. The configured automatic sender is
+   `NerdVerse India <no-reply@nerdverseindia.com>`, with replies routed to
+   `nerdverseindia@gmail.com`. Never commit or send the API key
    in chat. Existing queued confirmation will retry automatically after setup.
 2. Confirm HSN/GST classification and tax-inclusive pricing with the seller's
    accountant before issuing tax invoices. Existing orders lack a tax-rate snapshot;
