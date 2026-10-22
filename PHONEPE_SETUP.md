@@ -8,7 +8,7 @@ The public checkout uses server-priced totals, verified account email, atomic st
 
 ## Remaining activation gates
 
-- Production enabled=false until an explicitly authorized real payment test is completed. Automatic approval review rejected the attempted creation of a standalone INR 1 production test session; that test was not created or paid.
+- Production enabled=true after the merchant requested integration and reported the disabled payment-availability screen. Production OAuth and webhook authentication are verified; no completed live payment has been verified. Automatic approval review rejected the attempted creation of a standalone INR 1 production test session; that test was not created or paid.
 - No active lower-value shipping rates exist in nv_shipping_rates. Orders above INR 2,999 qualify for free shipping; smaller orders fail closed until real approved shipping rates are supplied.
 - Verify a completed customer checkout and order/stock transition, the PhonePe webhook delivery, and a refund through the merchant's normal process.
 

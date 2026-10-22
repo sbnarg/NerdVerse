@@ -30,8 +30,13 @@
   document.getElementById('checkoutTotal').textContent = money(cart.reduce((sum, x) => sum + Number(x.price || 0) * x.qty, 0));
   const items = () => cart.map(x => ({ product_id: x.id, quantity: x.qty }));
   let user;
+  async function bounded(promise) {
+    let timer;
+    try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(Error('Payment connection timed out. Please reload and try again.')), 12000); })]); }
+    finally { clearTimeout(timer); }
+  }
   async function api(action, body = {}) {
-    const session = await window.NV_AUTH?.session();
+    const session = await bounded(window.NV_AUTH?.session());
     const response = await fetch(window.NV_CONFIG.supabaseUrl + '/functions/v1/phonepe-checkout', {
       method: 'POST', headers: { 'Content-Type': 'application/json', apikey: window.NV_CONFIG.supabasePublishableKey,
         ...(session ? { Authorization: 'Bearer ' + session.access_token } : {}) },
@@ -83,7 +88,7 @@
     msg.textContent = 'Payment is still pending. Please do not pay again. Refresh this page later to check its status.';
   }
   try {
-    user = await window.NV_AUTH?.user();
+    user = await bounded(window.NV_AUTH?.user());
     if (user) {
       signedIn.textContent = 'Signed in as ' + user.email;
       form.elements.email.value = user.email || ''; form.elements.email.readOnly = true;
@@ -98,11 +103,13 @@
     if (config.sandbox_available && environment !== 'sandbox') {
       const test = document.createElement('a'); test.href = 'checkout.html?sandbox=1'; test.className = 'btn ghost'; test.textContent = 'Test PhonePe (sandbox)'; signedIn.append(document.createElement('br'), test);
     }
-    if (!config.enabled) { msg.textContent = pendingMessage; return; }
+    if (!config.enabled) { button.textContent = 'Payments temporarily unavailable'; msg.textContent = pendingMessage; return; }
     if (environment === 'sandbox') {
       msg.textContent = 'SANDBOX TEST — no real payment, order or stock reservation.';
       button.textContent = 'Test payment with PhonePe';
     } else { msg.textContent = 'Enter your delivery details to pay securely with PhonePe.'; button.textContent = 'Pay with PhonePe'; }
+    if (!user) { button.textContent = 'Sign in to pay'; msg.textContent = 'Sign in with your account to pay securely through PhonePe.'; }
+    else if (!cart.length) { button.textContent = 'Your cart is empty'; msg.textContent = 'Add a product to your cart to continue.'; }
     setEnabled(!!user && cart.length > 0);
     form.addEventListener('submit', async event => {
       event.preventDefault(); if (!form.reportValidity()) return;
@@ -126,5 +133,5 @@
         }
       } catch (e) { msg.textContent = e.message || 'Unable to start payment. Please try again.'; setEnabled(true); }
     });
-  } catch { msg.textContent = pendingMessage; }
+  } catch { setEnabled(false); button.textContent = 'Payment service unavailable'; msg.textContent = 'Unable to connect to payment services. Please reload and try again.'; }
 })();

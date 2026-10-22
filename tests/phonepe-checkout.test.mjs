@@ -23,7 +23,10 @@ async function page({url='https://nerdverseindia.com/checkout.html',saved=JSON.s
 }
 async function flush(){for(let i=0;i<8;i++)await new Promise(resolve=>setImmediate(resolve));}
 test('production disabled or unreachable keeps the payment button disabled',async()=>{
- for(const fail of [false,true]){const {dom,w}=await page({fail});assert.equal(w.document.querySelector('button[type=submit]').disabled,true);assert.match(w.document.getElementById('checkoutMsg').textContent,/temporarily unavailable/);dom.window.close();}
+ for(const fail of [false,true]){const {dom,w}=await page({fail});const button=w.document.querySelector('button[type=submit]');assert.equal(button.disabled,true);assert.match(w.document.getElementById('checkoutMsg').textContent,fail?/Unable to connect/:/temporarily unavailable/);assert.doesNotMatch(button.textContent,/checking/i);dom.window.close();}
+});
+test('enabled checkout distinguishes sign-in from an available payment',async()=>{
+ for(const anonymous of [true,false]){const {dom,w}=await page({enabled:true,anonymous});const button=w.document.querySelector('button[type=submit]');assert.equal(button.disabled,anonymous);assert.equal(button.textContent,anonymous?'Sign in to pay':'Pay with PhonePe');dom.window.close();}
 });
 test('damaged cart storage does not break the checkout page',async()=>{
  const {dom,w}=await page({saved:'{broken',enabled:true});assert.equal(w.document.querySelector('button[type=submit]').disabled,true);assert.equal(w.document.getElementById('checkoutItems').textContent,'Your cart is empty.');dom.window.close();
@@ -43,3 +46,4 @@ test('submission sends product quantities, obtains server totals and retains an 
  const create=calls.find(x=>x.action==='create');assert.ok(create);assert.ok(create.request_key);assert.deepEqual(create.items,[{product_id:cart[0].id,quantity:1}]);assert.equal('price' in create.items[0],false);assert.equal(w.document.getElementById('checkoutTotal').textContent,'₹4,999');
  assert.match(w.document.getElementById('checkoutMsg').textContent,/Payment confirmed/);dom.window.close();
 });
+
