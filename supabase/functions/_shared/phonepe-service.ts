@@ -26,7 +26,7 @@ export function validateItems(items: any) {
     return { product_id: x.product_id.toLowerCase(), quantity: x.quantity };
   }).sort((a, b) => a.product_id.localeCompare(b.product_id));
 }
-type Dependencies = { db: any; authenticate: (req: Request) => Promise<any>; sendEmail: (...args: any[]) => Promise<any>; background: (task: Promise<unknown>) => void; provider?: typeof createPhonePeClient };
+type Dependencies = { db: any; authenticate: (req: Request) => Promise<any>; sendEmail: (...args: any[]) => Promise<any>; background: (task: Promise<unknown>) => void; provider?: typeof createPhonePeClient; shipping?: {quote:(items:any[],pin:string)=>Promise<any>;sync:()=>Promise<void>} };
 export function createPhonePeService(deps: Dependencies) {
   const db = deps.db;
   const check = (r: any) => { if (r.error) throw new Error('Payment database operation failed'); return r.data; };
@@ -50,6 +50,7 @@ export function createPhonePeService(deps: Dependencies) {
     return { session_id: s.id, order_number: s.merchant_order_id, state: s.state, environment: s.environment, subtotal: Number(s.subtotal), shipping: Number(s.shipping), total: Number(s.total) };
   }
   async function notify() {
+    if (deps.shipping) await deps.shipping.sync().catch(() => undefined);
     const pending = check(await db.from('nv_phonepe_email_queue').select('session_id,attempts').is('sent_at', null).lt('attempts', 10).limit(10)) || [];
     for (const row of pending) {
       try {
@@ -124,6 +125,10 @@ export function createPhonePeService(deps: Dependencies) {
       if (!config?.enabled || !config.credentials) throw new RequestError('PhonePe merchant verification and payment setup are in progress', 503);
       const items = validateItems(b.items);
       if (b.action === 'quote') {
+        if (deps.shipping) {
+          try { return reply(await deps.shipping.quote(items, String(b.pin || ''))); }
+          catch (e) { throw new RequestError(e instanceof Error ? e.message : 'Delivery quotes are unavailable.'); }
+        }
         const result = await db.rpc('nv_phonepe_quote', { p_items: items, p_pin: String(b.pin || '') });
         if (result.error) throw new RequestError(result.error.message || 'Shipping quote unavailable');
         return reply({ subtotal: Number(result.data.subtotal), shipping: Number(result.data.shipping), total: Number(result.data.total) });

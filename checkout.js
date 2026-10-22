@@ -30,6 +30,8 @@
   document.getElementById('checkoutTotal').textContent = money(cart.reduce((sum, x) => sum + Number(x.price || 0) * x.qty, 0));
   const items = () => cart.map(x => ({ product_id: x.id, quantity: x.qty }));
   let user;
+  let acceptedQuote = null;
+  form.addEventListener("input", () => { acceptedQuote = null; const el=document.getElementById("checkoutShipping"); if(el)el.textContent="Check delivery"; });
   async function bounded(promise) {
     let timer;
     try { return await Promise.race([promise, new Promise((_, reject) => { timer = setTimeout(() => reject(Error('Payment connection timed out. Please reload and try again.')), 12000); })]); }
@@ -117,6 +119,8 @@
       try {
         const customer = Object.fromEntries(['name', 'phone', 'address', 'city', 'pin'].map(k => [k, form.elements[k].value.trim()]));
         const q = await api('quote', { items: items(), pin: customer.pin }); totals(q);
+        const quoteSignature = JSON.stringify({items:items(),pin:customer.pin,total:q.total,shipping:q.shipping});
+        if (acceptedQuote !== quoteSignature) { acceptedQuote=quoteSignature; msg.textContent='Delivery: '+(Number(q.shipping)===0?'Free':money(q.shipping))+'. Review your total of '+money(q.total)+' and click Pay with PhonePe again to continue.'; setEnabled(true); return; }
         // Keep a single idempotency key for retries of exactly the same checkout.
         const fingerprint = JSON.stringify({ items: items(), customer, environment });
         let saved; try { saved = JSON.parse(sessionStorage.getItem('nv-phonepe-attempt') || 'null'); } catch {}

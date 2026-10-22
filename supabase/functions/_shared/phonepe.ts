@@ -76,3 +76,4 @@ export function isPhonePePaymentComplete(status: PaymentStatus, providerOrderId:
     status.orderId === providerOrderId && status.state === 'COMPLETED' &&
     Number(status.amount) === amount && (!status.currency || status.currency === 'INR');
 }
+

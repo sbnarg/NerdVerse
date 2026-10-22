@@ -7,6 +7,7 @@ const uid='11111111-1111-4111-8111-111111111111';
 const pid='22222222-2222-4222-8222-222222222222';
 const customer={name:'Sandbox Customer',email:'test@example.invalid',phone:'9000000000',address:'Fixture address only',city:'Bengaluru',pin:'560068'};
 const items=[{product_id:pid,quantity:1}];
+const shippingMigration=await readFile(new URL('../supabase/shiprocket-setup.sql',import.meta.url),'utf8');
 const migration=await readFile(new URL('../supabase/migrations/20261017141209_phonepe_checkout.sql',import.meta.url),'utf8');
 before(async()=>{
  await db.exec(`CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role BYPASSRLS;
@@ -24,6 +25,7 @@ before(async()=>{
  INSERT INTO auth.users VALUES('${uid}'); INSERT INTO admin_users VALUES('${uid}','admin');
  INSERT INTO products VALUES('${pid}','Fixture collectible','fixture',4999,2,'active',now());`);
  await db.exec(migration);
+ await db.exec('ALTER TABLE products ADD COLUMN weight_grams integer, ADD COLUMN length_cm numeric, ADD COLUMN width_cm numeric, ADD COLUMN height_cm numeric;');
  await db.exec("UPDATE nv_phonepe_config SET enabled=true,credentials_secret_id=gen_random_uuid();");
 });
 after(()=>db.close());
@@ -112,4 +114,26 @@ test('provider attachment requires a claimed session and preserves terminal stat
 test('disabled production configuration blocks even service-role order creation',()=>isolated(async()=>{
  await db.exec("UPDATE nv_phonepe_config SET enabled=false WHERE environment='production'");
  await assert.rejects(reserve('production'),/not activated/);
+}));
+
+
+test('Shiprocket cache is service-only, bound to prices and packed measurements, and expires',()=>isolated(async()=>{
+ const rejected=async(promiseFactory,pattern)=>{await db.exec('SAVEPOINT expected_error');await assert.rejects(promiseFactory(),pattern);await db.exec('ROLLBACK TO SAVEPOINT expected_error');};
+ await db.exec(shippingMigration);
+ await db.exec("UPDATE products SET price=199,weight_grams=250,length_cm=40,width_cm=10,height_cm=10");
+ const cart=(await one('SELECT nv_shiprocket_cart($1,$2) c',[JSON.stringify(items),'560068'])).c;
+ await rejected(()=>db.query('SELECT nv_phonepe_quote($1,$2)',[JSON.stringify(items),'560068']),/refresh/);
+ await db.query("INSERT INTO nv_shiprocket_quotes VALUES($1,80,$2,now()+interval '30 minutes')",[cart.quote_key,JSON.stringify({box:{weight:0.25,length:40,breadth:10,height:10},state:'Karnataka'})]);
+ const q=(await one('SELECT nv_phonepe_quote($1,$2) q',[JSON.stringify(items),'560068'])).q;assert.equal(q.total,279);
+ const s=await reserve('production');assert.equal(s.shipping_details.box.weight,0.25);
+ await status(s,'COMPLETED',27900);await status(s,'COMPLETED',27900);
+ assert.equal((await one('SELECT count(*)::int n FROM nv_shiprocket_orders')).n,1);
+ assert.equal((await one('SELECT count(*)::int n FROM nv_shiprocket_claim()')).n,1);
+ assert.equal((await one('SELECT count(*)::int n FROM nv_shiprocket_claim()')).n,0);
+ await db.exec("UPDATE products SET weight_grams=251");
+ await rejected(()=>db.query('SELECT nv_phonepe_quote($1,$2)',[JSON.stringify(items),'560068']),/refresh/);
+ await db.exec("UPDATE products SET weight_grams=250; UPDATE nv_shiprocket_quotes SET expires_at=now()-interval '1 second'");
+ await rejected(()=>db.query('SELECT nv_phonepe_quote($1,$2)',[JSON.stringify(items),'560068']),/refresh/);
+ await db.exec('SET LOCAL ROLE authenticated');
+ await rejected(()=>db.query('SELECT * FROM nv_shiprocket_quotes'),/permission denied/);
 }));

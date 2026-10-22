@@ -17,5 +17,5 @@ SELECT cron.schedule('nv-phonepe-reconcile','* * * * *',$job$
   body:=jsonb_build_object('action','worker','environment','production'),timeout_milliseconds:=60000
  )
  FROM public.nv_phonepe_config c JOIN vault.decrypted_secrets v ON v.id=c.worker_secret_id
- WHERE c.environment='production' AND NOT EXISTS(SELECT 1 FROM public.nv_phonepe_sessions s WHERE s.environment=c.environment AND s.state='PENDING') AND EXISTS(SELECT 1 FROM public.nv_phonepe_email_queue q WHERE q.sent_at IS NULL AND q.attempts<10);
+ WHERE c.environment='production' AND NOT EXISTS(SELECT 1 FROM public.nv_phonepe_sessions s WHERE s.environment=c.environment AND s.state='PENDING') AND (EXISTS(SELECT 1 FROM public.nv_phonepe_email_queue q WHERE q.sent_at IS NULL AND q.attempts<10) OR EXISTS(SELECT 1 FROM public.nv_shiprocket_orders q WHERE q.status='queued' OR (q.status='created' AND q.next_check_at<=now()) OR (q.status='processing' AND q.claimed_at<now()-interval '10 minutes')));
 $job$);

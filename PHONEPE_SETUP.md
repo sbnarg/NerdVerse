@@ -9,7 +9,7 @@ The public checkout uses server-priced totals, verified account email, atomic st
 ## Remaining activation gates
 
 - Production enabled=true after the merchant requested integration and reported the disabled payment-availability screen. Production OAuth and webhook authentication are verified; no completed live payment has been verified. Automatic approval review rejected the attempted creation of a standalone INR 1 production test session; that test was not created or paid.
-- No active lower-value shipping rates exist in nv_shipping_rates. Orders above INR 2,999 qualify for free shipping; smaller orders fail closed until real approved shipping rates are supplied.
+- Shiprocket now supplies server-side live quotes with a 30-minute cache. Packed product measurements are required in Admin → Inventory. Orders above INR 2,999 retain free shipping. See SHIPROCKET_SETUP.md for setup, fulfilment review and tracking.
 - Verify a completed customer checkout and order/stock transition, the PhonePe webhook delivery, and a refund through the merchant's normal process.
 
 ## Validation
