@@ -13,7 +13,7 @@
     const saved = JSON.parse(localStorage.getItem('nv-cart') || '[]');
     if (Array.isArray(saved)) cart = saved.filter(x => x && typeof x.id === 'string' && Number.isInteger(x.qty) && x.qty > 0 && x.qty <= 20);
   } catch { /* A damaged cart is shown as empty. */ }
-  const pendingMessage = 'PhonePe payment setup and merchant verification are in progress. Payments are not yet available.';
+  const pendingMessage = 'Online payments are temporarily unavailable. Please try again shortly.';
   button.disabled = true;
   button.setAttribute('aria-disabled', 'true');
   const setEnabled = enabled => { button.disabled = !enabled; button.setAttribute('aria-disabled', String(!enabled)); };
