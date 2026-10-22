@@ -157,3 +157,27 @@ a[href="shop.html?segment=LEGO"],
 a[href="shop.html?segment=McFarlane"],
 .filter[data-filter="Vintage"],
 .filter[data-filter="Pop Culture"]{display:none!important}
+
+/* Keep navigation, long order references and forms usable on narrow screens. */
+.checkout-grid>*{min-width:0}
+.checkout-card input,.checkout-card textarea{min-width:0;max-width:100%;width:100%}
+.order-top strong,.order-top b,.cart-row b{overflow-wrap:anywhere}
+.cart-row>div{min-width:0}
+.admin-tabs{flex-wrap:wrap}
+@media(max-width:900px){
+ .site-header{height:auto;min-height:78px;flex-wrap:wrap;gap:12px;padding-top:12px;padding-bottom:12px}
+ .site-header .logo-link{flex-shrink:0}
+ .site-header .header-actions{margin-left:auto}
+ .site-header nav{order:3;flex:0 0 100%;width:100%;gap:4px 12px;padding-top:10px;border-top:1px solid var(--line)}
+ .site-header nav>a,.site-header .nv-nav-item>a{display:inline-flex;align-items:center;min-height:44px}
+ .site-header .nv-nav-item{min-width:0}
+}
+@media(max-width:560px){
+ .checkout-card{padding:20px}
+ .checkout-card input,.checkout-card textarea,.catalog-search{font-size:16px;min-height:44px}
+ .checkout-title,.page-hero h1{font-size:clamp(48px,13vw,72px)}
+ .checkout-card .btn,.filter,.add{min-height:44px}
+ .order-top strong,.order-top b{max-width:100%}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.drawer,.search-panel{transition:none}}
+

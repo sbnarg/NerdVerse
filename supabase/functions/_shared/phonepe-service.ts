@@ -58,9 +58,11 @@ export function createPhonePeService(deps: Dependencies) {
         if (!s || s.environment !== 'production' || s.state !== 'COMPLETED') continue;
         const mail = await deps.sendEmail(s.customer.email, 'NerdVerse India — Payment confirmed',
           `<div style="font-family:Arial,sans-serif"><h1>NerdVerse India</h1><h2>Payment confirmed</h2><p>Order ${s.merchant_order_id}</p><p>Total: ₹${Number(s.total).toFixed(2)}</p><p><a href="${SITE}/account.html">View your order</a></p></div>`, `phonepe-paid/${s.id}`);
-        if (!mail?.skipped) check(await db.from('nv_phonepe_email_queue').update({ sent_at: new Date().toISOString(), attempts: row.attempts + 1 }).eq('session_id', s.id));
-      } catch {
-        await db.from('nv_phonepe_email_queue').update({ attempts: row.attempts + 1 }).eq('session_id', row.session_id);
+        if (mail?.skipped) check(await db.from('nv_phonepe_email_queue').update({last_error:mail.reason||'email_not_configured'}).eq('session_id',s.id));
+        else check(await db.from('nv_phonepe_email_queue').update({ sent_at: new Date().toISOString(), attempts: row.attempts + 1, provider_id:mail?.id||null, last_error:null }).eq('session_id', s.id));
+      } catch (e) {
+        const code=e instanceof Error&&/^email_[a-z_]+$/.test(e.message)?e.message:'email_delivery_failed';
+        await db.from('nv_phonepe_email_queue').update({ attempts: row.attempts + 1,last_error:code }).eq('session_id', row.session_id);
         // Durable queue is retried by the worker. Never roll back a paid order for email failure.
       }
     }

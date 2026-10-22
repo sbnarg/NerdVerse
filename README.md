@@ -1,26 +1,22 @@
 # NerdVerse India
 
-Custom collectibles storefront backed by Supabase.
+Collectibles storefront at https://nerdverseindia.com, backed by Supabase.
 
-## Deployment model
+- Frontend: GitHub Pages from `main`, with the custom domain through Cloudflare.
+- Database/Auth/Edge Functions: Supabase; browser roles are protected by RLS.
+- Payments: PhonePe Standard Checkout v2. Earlier payment-provider code is legacy.
+- Shipping: Shiprocket quotes, paid-order export and scheduled tracking sync.
+  Courier booking/pickup still requires the seller's action in Shiprocket.
+- Transactional email: Resend, requiring `RESEND_API_KEY` and a verified-domain
+  `EMAIL_FROM`. Setup failures and queue counts appear in Admin → Shipping.
+- Customer payment receipts: My Account → View / save payment receipt.
+  A receipt is distinct from a GST tax invoice; invoice tax configuration remains.
 
-- **Frontend:** GitHub Pages from `main`
-- **Database/Auth/Edge Functions:** Supabase
-- **Payments:** Razorpay (server-side Edge Functions)
-- **Transactional email:** Resend
+See [LAUNCH_READINESS.md](LAUNCH_READINESS.md) for the dated verification checklist,
+completion percentages and external blockers. See [SHIPROCKET_SETUP.md](SHIPROCKET_SETUP.md)
+for package estimates and fulfilment behavior.
 
-## Supabase source of truth
-
-Database changes must live in `supabase/migrations/`. Do not add new production-only
-schema changes to `supabase/schema.sql`; that file is retained as a readable baseline/seed
-reference.
-
-The Supabase GitHub integration is configured with working directory `.` and production
-branch `main`. Merges to `main` therefore deploy versioned migrations and Edge Functions.
-
-## Secrets
-
-Never commit Supabase secret/service-role keys, Razorpay secrets, webhook secrets, or
-Resend API keys. Browser code may contain only the project URL and Supabase publishable key.
-
-See `SETUP_COMMERCE.md` for the remaining account-level configuration.
+Database changes belong in `supabase/migrations/`; `supabase/schema.sql` is a legacy
+baseline, not a production reset script. Do not run it against the live store.
+Never commit provider credentials or Supabase service-role keys. Browser config
+may contain only the project URL and publishable key.
