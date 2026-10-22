@@ -57,7 +57,7 @@ test('product detail escapes hostile content and wires a working cart button',()
  const appendedScripts=[];
  const document={addEventListener:()=>{},getElementById:()=>el,querySelector:()=>null,createElement:()=>({dataset:{}}),head:{append:node=>appendedScripts.push(node)}};
  const context={URL,URLSearchParams,location:{href:'https://nerdverseindia.com/product.html',search:'?id='+encodeURIComponent(id)},localStorage:{getItem:()=>null},document,window:{},ACTIVE_CATALOG:[{id,name:'<img src=x onerror=alert(1)>',brand:null,category:'<category>',price:199,stock_qty:1,status:'available',image:'javascript:alert(1)',images:['javascript:alert(1)','https://example.com/a.png?x=1&y=2'],condition:'<condition>',description:'<script>bad()</script>',tags:['<tag>'],details:['<detail>']} ]};
- vm.createContext(context);vm.runInContext(fs.readFileSync('script.js','utf8'),context);context.addToCart=value=>{added=value};context.renderProductPage();
+ vm.createContext(context);vm.runInContext(fs.readFileSync('script.js','utf8'),context);vm.runInContext('nvCatalogLoading=false',context);context.addToCart=value=>{added=value};context.renderProductPage();
  assert.equal(appendedScripts.length,1,'Profile script is still loaded');
  assert.match(appendedScripts[0].src,/^user-profile\.js/);
  assert.equal(mainPhoto.src,'','Unsafe initial photo URL is rejected');
