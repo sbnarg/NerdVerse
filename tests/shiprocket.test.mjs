@@ -22,12 +22,12 @@ test('credentials remain server-side, token is cached, requests include dimensio
  });
  const box={weight:0.5,length:40,breadth:10,height:10};await c.rates('700001',box,199);await c.rates('560068',box,199);
  assert.equal(calls.filter(c=>c.url.endsWith('/auth/login')).length,1);
- const url=new URL(calls[1].url);assert.equal(url.searchParams.get('cod'),'0');assert.equal(url.searchParams.get('length'),'40');assert.equal(url.searchParams.get('pickup_postcode'),'560068');
+ const url=new URL(calls[1].url);assert.equal(url.searchParams.get('cod'),'0');assert.equal(url.searchParams.get('length'),'40');assert.equal(url.searchParams.get('weight'),'0.8');assert.equal(url.searchParams.get('pickup_postcode'),'560068');
  assert.equal(calls[1].init.headers.Authorization,'Bearer fixture-token');assert.equal(calls[1].url.includes('fixture-secret'),false);
 });
 test('provider authentication errors do not disclose the response body',async()=>{
  const c=createShiprocketClient(()=> 'fixture',async()=>Response.json({password:'secret-data'},{status:401}));
- await assert.rejects(c.rates('700001',{weight:0.5},199),e=>!e.message.includes('secret-data'));
+ await assert.rejects(c.rates('700001',{weight:0.5,length:10,breadth:10,height:10},199),e=>!e.message.includes('secret-data'));
 });
 function exportHarness(paid=true,ambiguous=false){
  let claimed=false,creates=0;const updates=[];

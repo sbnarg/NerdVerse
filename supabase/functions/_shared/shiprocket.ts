@@ -20,7 +20,7 @@ export function packedCart(products: any[], items: any[]) {
 export function chooseRate(data: any) {
   const rows = data?.data?.available_courier_companies;
   if (!Array.isArray(rows)) throw new ShippingError('Delivery quotes are temporarily unavailable. Please try again.');
-  const rates = rows.filter(r => !Number(r.blocked) && !r.odablock && !r.is_international && Number.isFinite(Number(r.rate)) && Number(r.rate)>0 && Number(r.courier_company_id)>0 && typeof r.state === 'string')
+  const rates = rows.filter(r => !Number(r.blocked) && !r.odablock && Number(r.is_international||0)!==1 && !/fedex.*surface|aramex|gati.*surface/i.test(String(r.courier_name)) && Number.isFinite(Number(r.rate)) && Number(r.rate)>0 && Number(r.courier_company_id)>0 && typeof r.state === 'string')
     .sort((a,b) => Number(a.rate)-Number(b.rate));
   if (!rates.length) throw new ShippingError('Delivery is not available for this PIN code with the current parcel.');
   const r = rates[0];
@@ -46,7 +46,9 @@ export function createShiprocketClient(env: (key:string)=>string|undefined, tran
     return b;
   }
   return {request, async rates(pin:string,box:any,value:number){
-    const query=new URLSearchParams({pickup_postcode:'560068',delivery_postcode:pin,cod:'0',weight:String(box.weight),length:String(box.length),breadth:String(box.breadth),height:String(box.height),declared_value:String(value)});
+    const chargeWeight=Math.ceil(Math.max(box.weight,box.length*box.breadth*box.height/5000)*1000)/1000;
+    if(!Number.isFinite(chargeWeight)||chargeWeight<=0||chargeWeight>50)throw new ShippingError('This parcel needs a delivery quote from the store.');
+    const query=new URLSearchParams({pickup_postcode:'560068',delivery_postcode:pin,cod:'0',weight:String(chargeWeight),length:String(box.length),breadth:String(box.breadth),height:String(box.height),declared_value:String(value)});
     return chooseRate(await request('/courier/serviceability/?'+query));
   }, async pickup(){
     const explicit=env('SHIPROCKET_PICKUP_LOCATION');if(explicit)return explicit;
