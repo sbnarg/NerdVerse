@@ -1,0 +1,1 @@
+{"private":true,"type":"module","scripts":{"test":"node --experimental-transform-types --test *.test.mjs","typecheck":"tsc -p tsconfig.json"},"devDependencies":{"@electric-sql/pglite":"0.5.10","@supabase/supabase-js":"2.99.1","jsdom":"27.0.1","typescript":"6.0.2"}}
