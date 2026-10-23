@@ -1,4 +1,5 @@
 import {ensureInvoice} from './invoice.ts';
+import {deliveryStage} from './delivery.ts';
 const BASE = 'https://apiv2.shiprocket.in/v1/external';
 export function shiprocketInvoiceFields(s:any,invoice:any){
  const d=invoice?.data;
@@ -116,11 +117,15 @@ export function createShippingService(db:any, client:ReturnType<typeof createShi
       const b=await client.request('/courier/track/shipment/'+row.shipment_id);
       const t=b.tracking_data?.shipment_track?.[0];if(!t)continue;
       const awb=String(t.awb_code||'');if(!/^[A-Za-z0-9\/-]{1,80}$/.test(awb))continue;
-      const status=String(t.current_status||'').toLowerCase();
+      let stage=deliveryStage(t.current_status);
+      const current=check(await db.from('orders').select('delivery_status,status').eq('id',row.order_id).maybeSingle());
+      const ranks:any={shipped:1,out_for_delivery:2,delivered:3};
+      if(stage&&current?.delivery_status&&ranks[stage]<ranks[current.delivery_status])stage=current.delivery_status;
       const update:any={tracking_number:awb,courier_name:String(t.courier_name||'Shiprocket').slice(0,100),updated_at:new Date().toISOString()};
-      if(status==='delivered')update.status='delivered';else if(['in transit','out for delivery','picked up'].includes(status))update.status='shipped';
-      await db.from('orders').update(update).eq('id',row.order_id).eq('payment_status','paid').not('status','in','(cancelled,refunded,delivered)');
-      if(status==='delivered')await db.from('nv_shiprocket_orders').update({status:'delivered'}).eq('order_id',row.order_id);
+      if(stage){update.delivery_status=stage;update.status=stage==='delivered'?'delivered':'shipped';}
+      const saved=await db.from('orders').update(update).eq('id',row.order_id).eq('payment_status','paid').not('status','in','(cancelled,refunded,delivered)');
+      if(saved.error)throw Error('tracking_update_failed');
+      if(stage==='delivered')await db.from('nv_shiprocket_orders').update({status:'delivered'}).eq('order_id',row.order_id);
     }catch{/* Retried later. Tracking failures never change payment or inventory. */}}
   }
   return {quote,sync};

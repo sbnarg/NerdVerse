@@ -1,6 +1,7 @@
 import { createPhonePeClient } from './phonepe.ts';
 import { orderConfirmationEmail } from './email.ts';
 import { ensureInvoice } from './invoice.ts';
+import { flushDeliveryEmails } from './delivery.ts';
 const SITE = 'https://nerdverseindia.com';
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const cors = { 'Access-Control-Allow-Origin': SITE, 'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Vary': 'Origin' };
@@ -53,6 +54,7 @@ export function createPhonePeService(deps: Dependencies) {
   }
   async function notify() {
     if (deps.shipping) await deps.shipping.sync().catch(() => undefined);
+    await flushDeliveryEmails(db,deps.sendEmail).catch(() => undefined);
     const pending = check(await db.from('nv_phonepe_email_queue').select('session_id,attempts').is('sent_at', null).lt('attempts', 10).limit(10)) || [];
     for (const row of pending) {
       try {
