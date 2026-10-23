@@ -77,7 +77,9 @@
       if (result.state === 'COMPLETED') {
         msg.textContent = (environment === 'sandbox' ? 'Sandbox test successful. No real order was placed. ' : 'Payment confirmed. ') + 'Order: ' + result.order_number;
         button.textContent = environment === 'sandbox' ? 'Sandbox payment verified' : 'Payment confirmed';
-        clearPurchasedCart(id); return;
+        clearPurchasedCart(id);
+        if (environment === 'production') location.replace('account.html#orders');
+        return;
       }
       if (result.state === 'FAILED') {
         msg.textContent = 'PhonePe confirmed that this payment failed. Your payment was not accepted. Return to your cart to try again.';
