@@ -1,4 +1,14 @@
+import {ensureInvoice} from './invoice.ts';
 const BASE = 'https://apiv2.shiprocket.in/v1/external';
+export function shiprocketInvoiceFields(s:any,invoice:any){
+ const d=invoice?.data;
+ if(!invoice?.invoice_number||!d||Number(d.total_paise)!==Math.round(Number(s.total)*100))throw new ShippingError('A reconciled GST invoice is required before exporting this shipment.');
+ return {invoice_number:invoice.invoice_number,order_items:s.items.map((i:any)=>{
+  const lines=d.lines.filter((l:any)=>l.kind==='product'&&l.description===i.name&&Number(l.quantity)===Number(i.quantity)&&Number(l.unit_gross_paise)===Math.round(Number(i.price)*100));
+  if(lines.length!==1)throw new ShippingError('Invoice items require review before shipping.');
+  return {name:i.name,sku:i.sku||i.product_id,units:i.quantity,selling_price:Number(i.price),tax:Number(lines[0].gst_rate),hsn:String(lines[0].hsn)};
+ })};
+}
 export class ShippingError extends Error {}
 export function packedCart(products: any[], items: any[]) {
   let grams = 0, length = 0, width = 0, height = 0;
@@ -90,8 +100,10 @@ export function createShippingService(db:any, client:ReturnType<typeof createShi
           d={...rate,box};
           check(await db.from('nv_phonepe_sessions').update({shipping_details:d}).eq('id',s.id));
         }
+        const invoice=await ensureInvoice(db,s);
+        const invoiceFields=shiprocketInvoiceFields(s,invoice);
         const pickup=await client.pickup();
-        const payload={order_id:s.merchant_order_id,order_date:new Date(s.created_at).toLocaleString('sv-SE',{timeZone:'Asia/Kolkata'}).slice(0,19),pickup_location:pickup,billing_customer_name:s.customer.name,billing_last_name:'',billing_address:s.customer.address,billing_city:s.customer.city,billing_pincode:s.customer.pin,billing_state:d.state,billing_country:'India',billing_email:s.customer.email,billing_phone:s.customer.phone,shipping_is_billing:true,order_items:s.items.map((i:any)=>({name:i.name,sku:i.sku||i.product_id,units:i.quantity,selling_price:Number(i.price)})),payment_method:'Prepaid',shipping_charges:Number(s.shipping),sub_total:Number(s.subtotal),...d.box};
+        const payload={order_id:s.merchant_order_id,order_date:new Date(s.created_at).toLocaleString('sv-SE',{timeZone:'Asia/Kolkata'}).slice(0,19),pickup_location:pickup,billing_customer_name:s.customer.name,billing_last_name:'',billing_address:s.customer.address,billing_city:s.customer.city,billing_pincode:s.customer.pin,billing_state:d.state,billing_country:'India',billing_email:s.customer.email,billing_phone:s.customer.phone,shipping_is_billing:true,payment_method:'Prepaid',...invoiceFields,shipping_charges:Number(s.shipping),sub_total:Number(s.subtotal),...d.box};
         attempted=true; // Any ambiguous create response requires review; never blindly repeat a shipment.
         const response=await client.request('/orders/create/adhoc',payload);
         if(!Number(response.order_id)||!Number(response.shipment_id))throw new ShippingError('Provider order response requires review.');

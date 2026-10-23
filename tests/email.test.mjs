@@ -25,5 +25,5 @@ test('email sends retain provider idempotency and require a provider receipt',as
 test('automatic confirmation includes saved items, secure receipt link and correctly escapes names',()=>{
  const body=orderConfirmationEmail({order_id:'fixture-order',merchant_order_id:'NV-TEST',customer:{name:'<img>'},items:[{name:'<script>',quantity:1,price:199}],shipping:127.72,total:326.72});
  assert.match(body,/receipt.html\?order=fixture-order/);assert.match(body,/₹326.72/);assert.match(body,/₹127.72/);
- assert.match(body,/&lt;script&gt;/);assert.doesNotMatch(body,/<script>|<img>/);assert.match(body,/not a GST tax invoice/);
+ assert.match(body,/&lt;script&gt;/);assert.doesNotMatch(body,/<script>|<img>/);assert.match(body,/awaiting tax-detail verification/);
 });
