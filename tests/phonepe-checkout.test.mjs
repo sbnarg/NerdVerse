@@ -43,8 +43,7 @@ test('submission sends product quantities, obtains server totals and retains an 
  const values={name:'Tester',phone:'9000000000',address:'Fixture address',city:'Bengaluru',pin:'560068'};
  for(const [name,value]of Object.entries(values))w.document.querySelector(`[name=${name}]`).value=value;
  w.document.getElementById('checkoutForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
- assert.equal(calls.some(x=>x.action==='create'),false);assert.match(w.document.getElementById('checkoutMsg').textContent,/Review your total/);
- w.document.getElementById('checkoutForm').dispatchEvent(new w.Event('submit',{cancelable:true}));await flush();
+ assert.equal(calls.filter(x=>x.action==='quote').length,1);assert.equal(calls.filter(x=>x.action==='create').length,1);
  const create=calls.find(x=>x.action==='create');assert.ok(create);assert.ok(create.request_key);assert.deepEqual(create.items,[{product_id:cart[0].id,quantity:1}]);assert.equal('price' in create.items[0],false);assert.equal(w.document.getElementById('checkoutTotal').textContent,'₹4,999');
  assert.match(w.document.getElementById('checkoutMsg').textContent,/Payment confirmed/);dom.window.close();
 });
