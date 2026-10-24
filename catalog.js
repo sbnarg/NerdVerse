@@ -64,7 +64,7 @@ async function hydrateCatalog(){
    const legacy=CATALOG.find(x=>x.name===p.name||x.id===p.id);
    const sourceCategory=byId[p.category_id]||legacy?.category||'Other Collectibles';
    const segment=nvDetectSegment(p);
-   const category=sourceCategory==='G.I. Joe'?'Action Figures':sourceCategory==='Posters & Art Prints'?'Posters':sourceCategory;
+   const category=sourceCategory==='G.I. Joe'?'Action Figures':sourceCategory==='Posters & Art Prints'?'Posters':['Hot Wheels','MINI GT','Mini GT','Tomica','Matchbox','Majorette'].includes(sourceCategory)?'Die-Cast':sourceCategory==='Masters of the Universe'?'Action Figures':sourceCategory;
    const explicitTags=(String(p.description||'').match(/Collectible tags:\s*([^\n]+)/i)?.[1]||'').split(',').map(t=>t.trim().replace(/\.$/,'')).filter(Boolean);
    const vintage=nvNormalize(p.condition)==='vintage'||explicitTags.includes('Vintage')||(legacy?.tags||[]).includes('Vintage');
    const tags=[...new Set([...explicitTags,...(legacy?.tags||[]),p.brand,segment,category==='Action Figures'?'Action Figure':'',vintage?'Vintage':''].filter(Boolean))];

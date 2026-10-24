@@ -105,7 +105,9 @@
       form.elements.email.value = user.email || ''; form.elements.email.readOnly = true;
       form.elements.name.value = user.user_metadata?.full_name || '';
     } else {
-      signedIn.textContent = 'Sign in to continue. ';
+      signedIn.textContent = 'Sign in to keep your order and invoice in one account. ';
+      sessionStorage.setItem('nv-after-signin','checkout.html');
+      const emailSignIn=document.createElement('a');emailSignIn.href='account.html';emailSignIn.className='btn ghost';emailSignIn.textContent='Continue with email';signedIn.append(emailSignIn);
       const signIn = document.createElement('button'); signIn.type = 'button'; signIn.className = 'btn ghost'; signIn.textContent = 'Sign in with Google';
       signIn.onclick = () => window.NV_AUTH.google('checkout.html' + location.search); signedIn.append(signIn);
     }

@@ -1,8 +1,9 @@
 (async function(){
+function signInDestination(){const next=sessionStorage.getItem('nv-after-signin');sessionStorage.removeItem('nv-after-signin');return next==='checkout.html'?'checkout.html':'index.html';}
 const gate=document.getElementById('authGate'),panel=document.getElementById('accountPanel'),msg=document.getElementById('authMsg');
 document.getElementById('googleBtn').onclick=()=>NV_AUTH.google();
 document.getElementById('signOut').onclick=()=>NV_AUTH.signOut();
-document.getElementById('emailLoginForm').onsubmit=async e=>{e.preventDefault();if(!NV_AUTH.configured){msg.textContent='Sign-in unavailable';return}const btn=e.currentTarget.querySelector('button');btn.disabled=true;try{const {error}=await NV_AUTH.client.auth.signInWithPassword({email:document.getElementById('loginEmail').value.trim(),password:document.getElementById('loginPassword').value});if(error)msg.textContent='Sign-in failed: '+error.message;else location.replace('index.html')}finally{btn.disabled=false}};
+document.getElementById('emailLoginForm').onsubmit=async e=>{e.preventDefault();if(!NV_AUTH.configured){msg.textContent='Sign-in unavailable';return}const btn=e.currentTarget.querySelector('button');btn.disabled=true;try{const {error}=await NV_AUTH.client.auth.signInWithPassword({email:document.getElementById('loginEmail').value.trim(),password:document.getElementById('loginPassword').value});if(error)msg.textContent='Sign-in failed: '+error.message;else location.replace(signInDestination())}finally{btn.disabled=false}};
 document.getElementById('magicForm').onsubmit=async e=>{e.preventDefault();const {error}=await NV_AUTH.magicLink(document.getElementById('magicEmail').value.trim());msg.textContent=error?'Unable to send sign-in link.':'Check your inbox for the secure sign-in link.';};
 document.getElementById('emailSignupForm').onsubmit=async e=>{e.preventDefault();if(!NV_AUTH.configured){msg.textContent='Sign-up unavailable right now.';return;}const btn=e.currentTarget.querySelector('button');btn.disabled=true;try{const email=document.getElementById('signupEmail').value.trim(),password=document.getElementById('signupPassword').value;const {error}=await NV_AUTH.client.auth.signUp({email,password,options:{emailRedirectTo:NV_CONFIG.siteUrl+'account.html'}});msg.textContent=error?'Unable to create account: '+error.message:'Check your email for the verification link. After verification, sign in to view your orders.';}finally{btn.disabled=false;}};
 if(!NV_AUTH.configured){msg.textContent='Setup required: add Supabase credentials in config.js.';return;}
@@ -20,7 +21,7 @@ async function resolveUser(){
     const authCallback=params.has('code')||params.has('token_hash')||location.hash.includes('access_token=');
     if(authCallback){
       history.replaceState({},document.title,location.pathname);
-      location.replace('index.html');
+      location.replace(signInDestination());
       return null;
     }
     return session.user;
