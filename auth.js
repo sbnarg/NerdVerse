@@ -5,7 +5,8 @@
     async user(){if(!client)return null;const {data}=await client.auth.getUser();return data.user||null;},
     async session(){if(!client)return null;const {data}=await client.auth.getSession();return data.session||null;},
     async google(redirectPage='account.html'){if(!client)return alert('Add Supabase credentials in config.js.');const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:window.NV_CONFIG.siteUrl+redirectPage}});if(error)alert(error.message);},
-    async magicLink(email){if(!client)return {error:new Error('Supabase is not configured')};return client.auth.signInWithOtp({email,options:{emailRedirectTo:window.NV_CONFIG.siteUrl+'account.html'}});},
+    async sendEmailOtp(email){if(!client)return {error:new Error('Sign-in unavailable')};return client.auth.signInWithOtp({email,options:{shouldCreateUser:true}});},
+    async verifyEmailOtp(email,token){if(!client)return {error:new Error('Sign-in unavailable')};return client.auth.verifyOtp({email,token,type:'email'});},
     async signOut(){if(client)await client.auth.signOut();location.href='index.html';},
     async profile(){const user=await this.user();if(!user)return null;const {data}=await client.from('profiles').select('id,full_name,phone,role').eq('id',user.id).maybeSingle();return data||{id:user.id,full_name:user.user_metadata?.full_name||user.email,role:'customer'};}
   };

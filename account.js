@@ -3,9 +3,20 @@ function signInDestination(){const next=sessionStorage.getItem('nv-after-signin'
 const gate=document.getElementById('authGate'),panel=document.getElementById('accountPanel'),msg=document.getElementById('authMsg');
 document.getElementById('googleBtn').onclick=()=>NV_AUTH.google();
 document.getElementById('signOut').onclick=()=>NV_AUTH.signOut();
-document.getElementById('emailLoginForm').onsubmit=async e=>{e.preventDefault();if(!NV_AUTH.configured){msg.textContent='Sign-in unavailable';return}const btn=e.currentTarget.querySelector('button');btn.disabled=true;try{const {error}=await NV_AUTH.client.auth.signInWithPassword({email:document.getElementById('loginEmail').value.trim(),password:document.getElementById('loginPassword').value});if(error)msg.textContent='Sign-in failed: '+error.message;else location.replace(signInDestination())}finally{btn.disabled=false}};
-document.getElementById('magicForm').onsubmit=async e=>{e.preventDefault();const {error}=await NV_AUTH.magicLink(document.getElementById('magicEmail').value.trim());msg.textContent=error?'Unable to send sign-in link.':'Check your inbox for the secure sign-in link.';};
-document.getElementById('emailSignupForm').onsubmit=async e=>{e.preventDefault();if(!NV_AUTH.configured){msg.textContent='Sign-up unavailable right now.';return;}const btn=e.currentTarget.querySelector('button');btn.disabled=true;try{const email=document.getElementById('signupEmail').value.trim(),password=document.getElementById('signupPassword').value;const {error}=await NV_AUTH.client.auth.signUp({email,password,options:{emailRedirectTo:NV_CONFIG.siteUrl+'account.html'}});msg.textContent=error?'Unable to create account: '+error.message:'Check your email for the verification link. After verification, sign in to view your orders.';}finally{btn.disabled=false;}};
+const emailForm=document.getElementById('otpEmailForm'),verifyForm=document.getElementById('otpVerifyForm'),emailInput=document.getElementById('otpEmail'),codeInput=document.getElementById('otpCode'),sendBtn=document.getElementById('sendOtpBtn'),resendBtn=document.getElementById('resendOtpBtn');
+let otpEmail='',cooldownUntil=0,busy=false;
+function refreshCooldown(){const seconds=Math.max(0,Math.ceil((cooldownUntil-Date.now())/1000));resendBtn.disabled=busy||seconds>0;resendBtn.textContent=seconds?'Resend in '+seconds+'s':'Resend code';sendBtn.disabled=busy||seconds>0;sendBtn.textContent=seconds?'Send again in '+seconds+'s':'Send email OTP';}
+const cooldownTimer=setInterval(refreshCooldown,1000);window.addEventListener('pagehide',()=>clearInterval(cooldownTimer),{once:true});
+async function sendCode(){
+ if(busy||Date.now()<cooldownUntil||!emailForm.reportValidity())return;
+ if(!NV_AUTH.configured){msg.textContent='Sign-in unavailable. Please try again shortly.';return;}
+ busy=true;refreshCooldown();msg.textContent='Sending your sign-in code…';
+ try{const email=emailInput.value.trim();const {error}=await NV_AUTH.sendEmailOtp(email);if(error){if(error.status===429){cooldownUntil=Date.now()+60000;msg.textContent='Please wait a minute before requesting another code.';}else msg.textContent='Unable to send the code. Please try again or continue with Google.';return;}otpEmail=email;cooldownUntil=Date.now()+60000;verifyForm.hidden=false;emailForm.hidden=true;codeInput.value='';document.getElementById('otpSentTo').textContent='Enter the code sent to '+email;msg.textContent='Check your inbox and spam folder for your sign-in code.';codeInput.focus();}catch{msg.textContent='Unable to connect. Please try again or continue with Google.';}finally{busy=false;refreshCooldown();}
+}
+emailForm.onsubmit=e=>{e.preventDefault();sendCode()};resendBtn.onclick=()=>sendCode();
+document.getElementById('changeOtpEmail').onclick=()=>{if(busy)return;otpEmail='';codeInput.value='';verifyForm.hidden=true;emailForm.hidden=false;msg.textContent='';emailInput.focus();};
+verifyForm.onsubmit=async e=>{e.preventDefault();if(busy||!otpEmail||!verifyForm.reportValidity())return;busy=true;const button=verifyForm.querySelector('[type=submit]');button.disabled=true;refreshCooldown();msg.textContent='Verifying your code…';try{const {data,error}=await NV_AUTH.verifyEmailOtp(otpEmail,codeInput.value.trim());if(error||!data?.session){msg.textContent='That code is invalid or expired. Try again or request a new code.';codeInput.focus();return;}codeInput.value='';location.replace(signInDestination());}catch{msg.textContent='Unable to verify your code. Please try again.';}finally{busy=false;button.disabled=false;refreshCooldown();}};
+
 if(!NV_AUTH.configured){msg.textContent='Setup required: add Supabase credentials in config.js.';return;}
 
 async function resolveUser(){
