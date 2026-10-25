@@ -77,5 +77,12 @@ function enhanceProductExperience(el,p){
  const shipping=document.createElement('div');shipping.className='nv-service-strip';shipping.innerHTML='<div><b>Pan-India delivery</b><small>Free shipping over ₹2,999</small></div><div><b>Secure payment</b><small>Continue through PhonePe</small></div><div><b>Collector condition</b><small>Review actual photos & notes</small></div>';actions.after(shipping);
  const policy=copy.querySelector(':scope > .micro-note');if(policy){const details=document.createElement('details');details.className='nv-product-accordion';const summary=document.createElement('summary');summary.textContent='Returns & condition policy';details.append(summary);policy.replaceWith(details);details.append(policy);}
  const delivery=document.createElement('details');delivery.className='nv-product-accordion';delivery.innerHTML='<summary>Shipping & order updates</summary><p>Shipping is calculated for your PIN code during checkout. Free shipping applies to orders over ₹2,999. Sign in to complete payment and follow your order in My Account.</p><a class="text-link" href="shipping.html">Read shipping policy →</a>';copy.append(delivery);
- const related=ACTIVE_CATALOG.filter(x=>x.id!==p.id&&x.status!=='sold'&&Number(x.stock_qty)>0&&(x.category===p.category||x.brand===p.brand)).slice(0,4);if(related.length){const section=document.createElement('section');section.className='nv-related';section.innerHTML='<p class="eyebrow">KEEP EXPLORING</p><h2>You may also like.</h2><div id="nvRelatedGrid" class="product-grid"></div>';el.append(section);renderGrid('nvRelatedGrid',related);}
+ const related=nvRecommendations(p,ACTIVE_CATALOG);if(related.length){const section=document.createElement('section');section.className='nv-related';section.innerHTML='<p class="eyebrow">KEEP EXPLORING</p><h2>You may also like.</h2><div id="nvRelatedGrid" class="product-grid"></div>';el.append(section);renderGrid('nvRelatedGrid',related);}
+}
+
+function nvRecommendations(product,catalog){
+ const same=(a,b)=>Boolean(a&&b)&&String(a).toLowerCase()===String(b).toLowerCase();
+ const score=x=>(same(x.category,product.category)?4:0)+(same(x.brand,product.brand)&&String(x.brand).toLowerCase()!=='generic'?3:0)+(Array.isArray(x.tags)&&Array.isArray(product.tags)?x.tags.filter(t=>product.tags.includes(t)).length:0);
+ const seen=new Set([String(product.id)]);
+ return catalog.filter(x=>{const id=String(x.id);if(seen.has(id)||x.status==='sold'||Number(x.stock_qty)<=0||x.price==null)return false;seen.add(id);return true}).sort((a,b)=>score(b)-score(a)||Math.abs(Number(a.price)-Number(product.price))-Math.abs(Number(b.price)-Number(product.price))||String(a.id).localeCompare(String(b.id))).slice(0,4);
 }
