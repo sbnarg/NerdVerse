@@ -123,6 +123,7 @@ function formatCollectorListing(el,p){
 
 // Keep the brand strip and navigation aligned with the current die-cast makers.
 function nvCompleteBrandDiscovery(){
+ if(typeof document.querySelectorAll!=='function')return;
  const brands=[['CCA','brand-cca.svg'],['Welly','brand-welly.svg'],['Bburago','brand-bburago.svg']];
  for(const strip of document.querySelectorAll('.collector-marks')){
   for(const [name,src] of brands){
