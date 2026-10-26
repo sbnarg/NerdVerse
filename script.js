@@ -88,6 +88,7 @@ function enhanceProductExperience(el,p){
  const shipping=document.createElement('div');shipping.className='nv-service-strip';shipping.innerHTML='<div><b>Pan-India delivery</b><small>Free shipping over ₹2,999</small></div><div><b>Secure payment</b><small>Continue through PhonePe</small></div><div><b>Collector condition</b><small>Review actual photos & notes</small></div>';actions.after(shipping);
  const policy=copy.querySelector(':scope > .micro-note');if(policy){const details=document.createElement('details');details.className='nv-product-accordion';const summary=document.createElement('summary');summary.textContent='Returns & condition policy';details.append(summary);policy.replaceWith(details);details.append(policy);}
  const delivery=document.createElement('details');delivery.className='nv-product-accordion';delivery.innerHTML='<summary>Shipping & order updates</summary><p>Shipping is calculated for your PIN code during checkout. Free shipping applies to orders over ₹2,999. Sign in to complete payment and follow your order in My Account.</p><a class="text-link" href="shipping.html">Read shipping policy →</a>';copy.append(delivery);
+ formatCollectorListing(el,p);
  const related=nvRecommendations(p,ACTIVE_CATALOG);if(related.length){const section=document.createElement('section');section.className='nv-related';section.innerHTML='<p class="eyebrow">KEEP EXPLORING</p><h2>You may also like.</h2><div id="nvRelatedGrid" class="product-grid"></div>';el.append(section);renderGrid('nvRelatedGrid',related);}
 }
 
@@ -97,3 +98,25 @@ function nvRecommendations(product,catalog){
  const seen=new Set([String(product.id)]);
  return catalog.filter(x=>{const id=String(x.id);if(seen.has(id)||x.status==='sold'||Number(x.stock_qty)<=0||x.price==null)return false;seen.add(id);return true}).sort((a,b)=>score(b)-score(a)||Math.abs(Number(a.price)-Number(product.price))-Math.abs(Number(b.price)-Number(product.price))||String(a.id).localeCompare(String(b.id))).slice(0,4);
 }
+
+function formatCollectorListing(el,p){
+ if(/poster|keychain/i.test(p.category||''))return;
+ el.classList.add('nv-collector-presentation');
+ const description=el.querySelector('.detail-description');
+ if(description){
+  const box=document.createElement('div');box.className='detail-description nv-listing-description';
+  const content=String(p.description||'').replace(/\\n/g,'\n');
+  for(const block of content.split(/\n+/).map(x=>x.trim()).filter(Boolean)){
+   const paragraph=document.createElement('p'),label=block.match(/^([A-Za-z][A-Za-z /&-]{1,35}:)\s*(.*)$/);
+   if(label){const strong=document.createElement('strong');strong.textContent=label[1]+' ';paragraph.append(strong,document.createTextNode(label[2]));}else paragraph.textContent=block;
+   box.append(paragraph);
+  }
+  description.replaceWith(box);
+ }
+ if(!document.getElementById('nvCollectorPresentationStyle')){
+  const style=document.createElement('style');style.id='nvCollectorPresentationStyle';
+  style.textContent='.nv-collector-presentation .nv-photo-stage{aspect-ratio:1;background:#101010;border:1px solid #383328;border-radius:8px;overflow:hidden}.nv-collector-presentation .nv-photo-stage>img{width:100%;height:100%;object-fit:contain;display:block}.nv-listing-description p{margin:0 0 14px;line-height:1.7;color:#c7c7c7}.nv-listing-description strong{color:#f2d77a}.nv-collector-presentation .detail-price{margin:16px 0}.nv-collector-presentation .nv-product-thumbnails{gap:8px}.nv-collector-presentation .nv-photo-thumb{border-radius:5px;overflow:hidden}@media(max-width:700px){.nv-collector-presentation .nv-listing-description{font-size:14px}.nv-collector-presentation .nv-photo-stage{border-radius:6px}}';
+  document.head.append(style);
+ }
+}
+
