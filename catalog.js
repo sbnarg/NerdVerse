@@ -36,6 +36,7 @@ const CATALOG = [
 function money(n){ return n==null ? 'Price on request' : '₹'+Number(n).toLocaleString('en-IN'); }
 function getProduct(id){ return CATALOG.find(p=>p.id===id); }
 
+function nvStoreCategory(category){return nvNormalize(category)==='die cast cars'?'Die-Cast':category}
 let ACTIVE_CATALOG = [];
 window.NV_CATALOG_ERROR = null;
 async function hydrateCatalog(){
@@ -62,7 +63,7 @@ async function hydrateCatalog(){
   const byId=Object.fromEntries(categories.map(x=>[x.id,x.name]));
   ACTIVE_CATALOG=data.map(p=>{
    const legacy=CATALOG.find(x=>x.name===p.name||x.id===p.id);
-   const sourceCategory=byId[p.category_id]||legacy?.category||'Other Collectibles';
+   const sourceCategory=nvStoreCategory(byId[p.category_id]||legacy?.category||'Other Collectibles');
    const segment=nvDetectSegment(p);
    const category=sourceCategory==='G.I. Joe'?'Action Figures':sourceCategory==='Posters & Art Prints'?'Posters':['Hot Wheels','MINI GT','Mini GT','Tomica','Matchbox','Majorette'].includes(sourceCategory)?'Die-Cast':sourceCategory==='Masters of the Universe'?'Action Figures':sourceCategory;
    const explicitTags=(String(p.description||'').match(/Collectible tags:\s*([^\n]+)/i)?.[1]||'').split(',').map(t=>t.trim().replace(/\.$/,'')).filter(Boolean);
@@ -74,7 +75,7 @@ async function hydrateCatalog(){
   try{sessionStorage.setItem('nv-last-public-catalog',JSON.stringify({time:Date.now(),products:ACTIVE_CATALOG}))}catch(_e){}
  }catch(e){
   console.error('NerdVerse public inventory failed',e);
-  ACTIVE_CATALOG=cached||[];
+  ACTIVE_CATALOG=(cached||[]).map(p=>({...p,category:nvStoreCategory(p.category)}));
   window.NV_CATALOG_ERROR='Live inventory is temporarily unavailable. Please try again shortly.';
  }
 }
