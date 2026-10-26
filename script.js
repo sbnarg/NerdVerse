@@ -120,3 +120,28 @@ function formatCollectorListing(el,p){
  }
 }
 
+
+// Keep the brand strip and navigation aligned with the current die-cast makers.
+function nvCompleteBrandDiscovery(){
+ const brands=[['CCA','brand-cca.svg'],['Welly','brand-welly.svg'],['Bburago','brand-bburago.svg']];
+ for(const strip of document.querySelectorAll('.collector-marks')){
+  for(const [name,src] of brands){
+   let link=Array.from(strip.querySelectorAll('a')).find(a=>new URL(a.href,location.href).searchParams.get('brand')===name);
+   if(!link){link=document.createElement('a');link.className='collector-mark collector-mark-2';strip.append(link);}
+   link.href='shop.html?brand='+encodeURIComponent(name);link.setAttribute('aria-label','Shop '+name);link.replaceChildren();
+   const img=document.createElement('img');img.className='collector-logo';img.src=src;img.alt=name+' logo';img.loading='lazy';
+   const fallback=document.createElement('span');fallback.textContent=name;
+   img.onload=()=>fallback.hidden=true;img.onerror=()=>img.remove();link.append(img,fallback);
+  }
+ }
+ for(const item of document.querySelectorAll('.nv-nav-item')){
+  const heading=item.querySelector(':scope > a');const dropdown=item.querySelector('.nv-dropdown');
+  if(!heading||!dropdown||!heading.getAttribute('href')?.startsWith('brands.html'))continue;
+  for(const [name] of brands){
+   if(Array.from(dropdown.querySelectorAll('a')).some(a=>a.textContent.trim().toLowerCase()===name.toLowerCase()))continue;
+   const link=document.createElement('a');link.href='shop.html?brand='+encodeURIComponent(name);link.textContent=name;
+   const all=Array.from(dropdown.children).find(a=>a.textContent.trim()==='All Brands');dropdown.insertBefore(link,all||null);
+  }
+ }
+}
+nvCompleteBrandDiscovery();
