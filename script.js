@@ -8,7 +8,7 @@ function saveCart(){localStorage.setItem('nv-cart',JSON.stringify(cart));renderC
 let nvCartSignedIn=false;
 let nvCartAuthReady=null;
 let nvCatalogLoading=true;
-function syncCartButtons(){document.querySelectorAll('[data-cart-id]').forEach(button=>{button.textContent='ADD TO CART';});}
+function syncCartButtons(){document.querySelectorAll('[data-cart-id]').forEach(button=>{button.textContent=nvCartSignedIn?'ADD TO CART':'SIGN IN TO ADD';});const add=document.getElementById('nvAddProduct'),buy=document.getElementById('nvBuyProduct');if(add)add.textContent=nvCartSignedIn?'Add to cart':'Sign in to add';if(buy)buy.textContent=nvCartSignedIn?'Buy it now ↗':'Sign in to buy';}
 function cartAuth(){
  if(!nvCartAuthReady)nvCartAuthReady=(async()=>{
   await ensureCommerceClient();
@@ -22,7 +22,18 @@ function cartAuth(){
  })().catch(error=>{nvCartAuthReady=null;throw error});
  return nvCartAuthReady;
 }
+async function requireCartSignIn(){
+ try{
+  const auth=await cartAuth();
+  const {data,error}=await auth.getUser();
+  nvCartSignedIn=!error&&!!data?.user;syncCartButtons();
+  if(nvCartSignedIn)return true;
+  if(error&&error.name!=='AuthSessionMissingError')throw error;
+  location.assign('account.html');return false;
+ }catch(error){alert('Sign-in could not be checked. Please try again before adding an item.');return false;}
+}
 async function addToCart(id){
+ if(!await requireCartSignIn())return false;
  const p=ACTIVE_CATALOG.find(x=>x.id===id);if(!p||p.status==='sold'||p.price==null||Number(p.stock_qty||0)<=0){return}const found=cart.find(x=>x.id===id);if(found){if(found.qty>=Math.min(20,Number(p.stock_qty))){alert('Maximum '+Math.min(20,Number(p.stock_qty))+' unit(s) can be added.');return}found.qty++}else cart.push({...p,qty:1});saveCart();openCart();return true
 }
 function removeFromCart(id){cart=cart.filter(x=>x.id!==id);saveCart()}
@@ -31,11 +42,11 @@ function openCart(){document.getElementById('cartDrawer')?.classList.add('open')
 function closeCart(){document.getElementById('cartDrawer')?.classList.remove('open');document.getElementById('overlay')?.classList.remove('show')}
 function productImageUrl(v){try{if(typeof v!=='string'||!v.trim())return '';const u=new URL(v,location.href);return ['https:','http:'].includes(u.protocol)?u.href:''}catch{return ''}}
 function safeProductImage(v){return escapeCartText(productImageUrl(v))}
-function productCard(p){const disabled=p.status==='sold'||p.price==null||Number(p.stock_qty||0)<=0;return `<article class="product-card"><a href="product.html?id=${encodeURIComponent(p.id)}" class="product-image-wrap"><img src="${safeProductImage(p.image)}" alt="${escapeCartText(p.name)}" loading="lazy" decoding="async"><span class="badge">${escapeCartText(p.badge)}</span></a><div class="product-info"><div class="product-meta"><span>${escapeCartText(p.brand)}</span><span>${escapeCartText(p.category)}</span></div><h3><a href="product.html?id=${encodeURIComponent(p.id)}">${escapeCartText(p.name)}</a></h3><p class="condition">${escapeCartText(p.condition)}</p><div class="product-bottom"><strong>${money(p.price)}</strong>${disabled?`<button class="add" disabled>${p.status==='sold'||Number(p.stock_qty||0)<=0?'OUT OF STOCK':'PRICE ON REQUEST'}</button>`:`<button class="add" data-cart-id="${escapeCartText(p.id)}">ADD TO CART</button>`}</div></div></article>`}
+function productCard(p){const disabled=p.status==='sold'||p.price==null||Number(p.stock_qty||0)<=0;return `<article class="product-card"><a href="product.html?id=${encodeURIComponent(p.id)}" class="product-image-wrap"><img src="${safeProductImage(p.image)}" alt="${escapeCartText(p.name)}" loading="lazy" decoding="async"><span class="badge">${escapeCartText(p.badge)}</span></a><div class="product-info"><div class="product-meta"><span>${escapeCartText(p.brand)}</span><span>${escapeCartText(p.category)}</span></div><h3><a href="product.html?id=${encodeURIComponent(p.id)}">${escapeCartText(p.name)}</a></h3><p class="condition">${escapeCartText(p.condition)}</p><div class="product-bottom"><strong>${money(p.price)}</strong>${disabled?`<button class="add" disabled>${p.status==='sold'||Number(p.stock_qty||0)<=0?'OUT OF STOCK':'PRICE ON REQUEST'}</button>`:`<button class="add" data-cart-id="${escapeCartText(p.id)}">${nvCartSignedIn?'ADD TO CART':'SIGN IN TO ADD'}</button>`}</div></div></article>`}
 function renderGrid(targetId,list){const el=document.getElementById(targetId);if(el){if(nvCatalogLoading){el.setAttribute("aria-busy","true");el.innerHTML='<p class="empty" role="status">Loading collection…</p>';return;}el.setAttribute("aria-busy","false");el.innerHTML=list.map(productCard).join('')||'<p class="empty">No pieces found.</p>';el.querySelectorAll('[data-cart-id]').forEach(b=>b.addEventListener('click',()=>addToCart(b.dataset.cartId)))}}
 function setupShop(){
  const grid=document.getElementById('productGrid');if(!grid)return;
- const params=new URLSearchParams(location.search);let filter=params.get('category')||'All',brand=params.get('brand')||'All',q=params.get('q')||'',sort=params.get('sort')||'featured';const segment=params.get('segment')||'';
+ const params=new URLSearchParams(location.search);let filter=nvStoreCategory(params.get('category')||'All'),brand=params.get('brand')||'All',q=params.get('q')||'',sort=params.get('sort')||'featured';const segment=params.get('segment')||'';
  const filterGroup=document.querySelector('.filters');if(filterGroup){for(const category of [...new Set(ACTIVE_CATALOG.map(p=>p.category))])if(!Array.from(filterGroup.querySelectorAll('.filter')).some(b=>b.dataset.filter===category)){const b=document.createElement('button');b.type='button';b.className='filter';b.dataset.filter=category;b.textContent=category;filterGroup.append(b)}}
  const filters=document.querySelectorAll('.filter');
  let toolbar=document.getElementById('nvCatalogTools');
@@ -70,8 +81,8 @@ function enhanceProductExperience(el,p){
  const copy=el.querySelector('.product-detail-copy');if(!copy)return;
  const crumb=document.createElement('nav');crumb.className='nv-breadcrumb';crumb.setAttribute('aria-label','Breadcrumb');crumb.innerHTML='<a href="index.html">Home</a><span> / </span><a href="shop.html">Collection</a><span> / </span><a href="shop.html?category='+encodeURIComponent(p.category)+'">'+escapeCartText(p.category)+'</a>';el.prepend(crumb);
  const actions=copy.querySelector('.detail-actions'),available=p.status!=='sold'&&Number(p.stock_qty)>0&&p.price!=null;
- if(available){actions.innerHTML='<label class="nv-quantity">Quantity <input id="nvQuantity" type="number" min="1" max="'+Math.min(20,p.stock_qty)+'" value="1" inputmode="numeric"></label><p class="micro-note">'+Number(p.stock_qty)+' available · '+escapeCartText(p.condition)+'</p><div class="nv-buy-actions"><button type="button" class="btn ghost" id="nvAddProduct">Add to cart</button><button type="button" class="btn primary" id="nvBuyProduct">Buy it now ↗</button></div><p id="nvPurchaseMsg" role="status" class="micro-note"></p>';
- function purchase(buy){const input=actions.querySelector('#nvQuantity');if(!input.reportValidity())return;const qty=Number(input.value),found=cart.find(x=>x.id===p.id),existing=found?.qty||0;if(!Number.isInteger(qty)||qty<1||qty+existing>Math.min(20,Number(p.stock_qty))){actions.querySelector('#nvPurchaseMsg').textContent='Your cart and this quantity exceed available stock or the 20-piece checkout limit.';return;}if(found)found.qty+=qty;else cart.push({...p,qty});saveCart();if(buy)location.assign('checkout.html');else openCart();}
+ if(available){actions.innerHTML='<label class="nv-quantity">Quantity <input id="nvQuantity" type="number" min="1" max="'+Math.min(20,p.stock_qty)+'" value="1" inputmode="numeric"></label><p class="micro-note">'+Number(p.stock_qty)+' available · '+escapeCartText(p.condition)+'</p><div class="nv-buy-actions"><button type="button" class="btn ghost" id="nvAddProduct">'+(nvCartSignedIn?'Add to cart':'Sign in to add')+'</button><button type="button" class="btn primary" id="nvBuyProduct">'+(nvCartSignedIn?'Buy it now ↗':'Sign in to buy')+'</button></div><p id="nvPurchaseMsg" role="status" class="micro-note"></p>';
+ async function purchase(buy){if(!await requireCartSignIn())return;const input=actions.querySelector('#nvQuantity');if(!input.reportValidity())return;const qty=Number(input.value),found=cart.find(x=>x.id===p.id),existing=found?.qty||0;if(!Number.isInteger(qty)||qty<1||qty+existing>Math.min(20,Number(p.stock_qty))){actions.querySelector('#nvPurchaseMsg').textContent='Your cart and this quantity exceed available stock or the 20-piece checkout limit.';return;}if(found)found.qty+=qty;else cart.push({...p,qty});saveCart();if(buy)location.assign('checkout.html');else openCart();}
  actions.querySelector('#nvAddProduct').onclick=()=>purchase(false);actions.querySelector('#nvBuyProduct').onclick=()=>purchase(true);
  }
  const shipping=document.createElement('div');shipping.className='nv-service-strip';shipping.innerHTML='<div><b>Pan-India delivery</b><small>Free shipping over ₹2,999</small></div><div><b>Secure payment</b><small>Continue through PhonePe</small></div><div><b>Collector condition</b><small>Review actual photos & notes</small></div>';actions.after(shipping);
