@@ -57,7 +57,7 @@ async function hydrateCatalog(){
     return await response.json();
    }finally{clearTimeout(timeout)}
   }
-  const [data,categoriesResult]=await Promise.all([read('products?select=id,name,brand,price,stock,status,description,condition,category_id,image_urls&status=in.(active,sold_out)&order=name.asc'),read('categories?select=id,name').catch(e=>{console.warn('Category names unavailable',e);return []})]);
+  const [data,categoriesResult]=await Promise.all([read('products?select=id,name,brand,price,stock,status,description,condition,category_id,image_urls,created_at&status=in.(active,sold_out)&order=name.asc'),read('categories?select=id,name').catch(e=>{console.warn('Category names unavailable',e);return []})]);
   if(!Array.isArray(data)||!data.length)throw new Error('No public product records returned. Check storefront SELECT permissions.');
   const categories=categoriesResult;
   const byId=Object.fromEntries(categories.map(x=>[x.id,x.name]));
