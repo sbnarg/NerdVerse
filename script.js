@@ -42,8 +42,8 @@ function openCart(){document.getElementById('cartDrawer')?.classList.add('open')
 function closeCart(){document.getElementById('cartDrawer')?.classList.remove('open');document.getElementById('overlay')?.classList.remove('show')}
 function productImageUrl(v){try{if(typeof v!=='string'||!v.trim())return '';const u=new URL(v,location.href);return ['https:','http:'].includes(u.protocol)?u.href:''}catch{return ''}}
 function safeProductImage(v){return escapeCartText(productImageUrl(v))}
-function productCard(p){const disabled=p.status==='sold'||p.price==null||Number(p.stock_qty||0)<=0;return `<article class="product-card"><a href="product.html?id=${encodeURIComponent(p.id)}" class="product-image-wrap"><img src="${safeProductImage(p.image)}" alt="${escapeCartText(p.name)}" loading="lazy" decoding="async"><span class="badge">${escapeCartText(p.badge)}</span></a><div class="product-info"><div class="product-meta"><span>${escapeCartText(p.brand)}</span><span>${escapeCartText(p.category)}</span></div><h3><a href="product.html?id=${encodeURIComponent(p.id)}">${escapeCartText(p.name)}</a></h3><p class="condition">${escapeCartText(p.condition)}</p><div class="product-bottom"><strong>${money(p.price)}</strong>${disabled?`<button class="add" disabled>${p.status==='sold'||Number(p.stock_qty||0)<=0?'OUT OF STOCK':'PRICE ON REQUEST'}</button>`:`<button class="add" data-cart-id="${escapeCartText(p.id)}">${nvCartSignedIn?'ADD TO CART':'SIGN IN TO ADD'}</button>`}</div></div></article>`}
-function renderGrid(targetId,list){const el=document.getElementById(targetId);if(el){if(nvCatalogLoading){el.setAttribute("aria-busy","true");el.innerHTML='<p class="empty" role="status">Loading collection…</p>';return;}el.setAttribute("aria-busy","false");el.innerHTML=list.map(productCard).join('')||'<p class="empty">No pieces found.</p>';el.querySelectorAll('[data-cart-id]').forEach(b=>b.addEventListener('click',()=>addToCart(b.dataset.cartId)))}}
+function productCard(p,index=4){const disabled=p.status==='sold'||p.price==null||Number(p.stock_qty||0)<=0;return `<article class="product-card"><a href="product.html?id=${encodeURIComponent(p.id)}" class="product-image-wrap"><img src="${safeProductImage(p.image)}" alt="${escapeCartText(p.name)}" loading="${index<4?'eager':'lazy'}" decoding="async"><span class="badge">${escapeCartText(p.badge)}</span></a><div class="product-info"><div class="product-meta"><span>${escapeCartText(p.brand)}</span><span>${escapeCartText(p.category)}</span></div><h3><a href="product.html?id=${encodeURIComponent(p.id)}">${escapeCartText(p.name)}</a></h3><p class="condition">${escapeCartText(p.condition)}</p><div class="product-bottom"><strong>${money(p.price)}</strong>${disabled?`<button class="add" disabled>${p.status==='sold'||Number(p.stock_qty||0)<=0?'OUT OF STOCK':'PRICE ON REQUEST'}</button>`:`<button class="add" data-cart-id="${escapeCartText(p.id)}">${nvCartSignedIn?'ADD TO CART':'SIGN IN TO ADD'}</button>`}</div></div></article>`}
+function renderGrid(targetId,list){const el=document.getElementById(targetId);if(el){if(nvCatalogLoading){el.setAttribute("aria-busy","true");el.innerHTML='<p class="empty" role="status">Loading collection…</p>';return;}el.setAttribute("aria-busy","false");el.innerHTML=list.map((p,index)=>productCard(p,index)).join('')||'<p class="empty">No pieces found.</p>';if(window.NV_CATALOG_ERROR&&list.length){const warning=document.createElement('p');warning.className='nv-inventory-warning';warning.setAttribute('role','status');warning.textContent='Showing recently saved listings. Live stock could not be refreshed; availability will be checked at checkout.';el.prepend(warning);}el.querySelectorAll('[data-cart-id]').forEach(b=>b.addEventListener('click',()=>addToCart(b.dataset.cartId)))}}
 function setupShop(){
  const grid=document.getElementById('productGrid');if(!grid)return;
  const params=new URLSearchParams(location.search);let filter=nvStoreCategory(params.get('category')||'All'),brand=params.get('brand')||'All',q=params.get('q')||'',sort=params.get('sort')||'featured';const segment=params.get('segment')||'';
@@ -146,3 +146,33 @@ function nvCompleteBrandDiscovery(){
  }
 }
 nvCompleteBrandDiscovery();
+
+// Cart and search must be reachable and dismissible without a mouse.
+function setupStorefrontAccessibility(){
+ const cartPanel=document.getElementById('cartDrawer'),searchPanel=document.getElementById('searchPanel');
+ let returnFocus=null;
+ const panels=[cartPanel,searchPanel].filter(Boolean);
+ for(const panel of panels){
+  panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
+  panel.setAttribute('aria-label',panel===cartPanel?'Your cart':'Search the collection');
+  panel.setAttribute('aria-hidden','true');panel.inert=true;
+ }
+ for(const [id,label] of [['searchBtn','Search the collection'],['closeSearch','Close search'],['closeCart','Close cart']])document.getElementById(id)?.setAttribute('aria-label',label);
+ searchPanel?.querySelector('input')?.setAttribute('aria-label','Search the collection');
+ function sync(panel){
+  const open=panel.classList.contains('open');panel.inert=!open;panel.setAttribute('aria-hidden',String(!open));
+  if(open){returnFocus=document.activeElement;panel.querySelector('button,a[href],input')?.focus();}
+  else if(returnFocus?.isConnected){returnFocus.focus();returnFocus=null;}
+ }
+ for(const panel of panels)new MutationObserver(()=>sync(panel)).observe(panel,{attributes:true,attributeFilter:['class']});
+ document.addEventListener('keydown',event=>{
+  const panel=panels.find(p=>p.classList.contains('open'));if(!panel)return;
+  if(event.key==='Escape'){event.preventDefault();if(panel===cartPanel)closeCart();else panel.classList.remove('open');return;}
+  if(event.key!=='Tab')return;
+  const controls=Array.from(panel.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select,textarea')).filter(e=>!e.hidden);
+  const first=controls[0],last=controls[controls.length-1];
+  if(event.shiftKey&&document.activeElement===first){event.preventDefault();last?.focus();}
+  else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first?.focus();}
+ });
+}
+document.addEventListener('DOMContentLoaded',setupStorefrontAccessibility);

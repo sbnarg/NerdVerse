@@ -188,3 +188,11 @@ a[href="shop.html?segment=McFarlane"],
 /* Keep long model names and purchase controls comfortably readable. */
 .product-detail.section{padding-top:45px}.product-detail{column-gap:45px;row-gap:28px}.product-detail-copy h1{font-size:clamp(30px,3.2vw,44px);line-height:1.08;letter-spacing:-.6px;margin-bottom:18px}.product-detail-image{min-height:0;padding-bottom:18px}.detail-description{font-size:13px;line-height:1.65}.detail-tags{margin:16px 0}.detail-actions{margin-top:18px}.nv-service-strip{padding:16px 0}.nv-related{margin-top:38px}
 @media(max-width:650px){.product-detail-copy h1{font-size:32px}.product-detail.section{padding-top:28px}.product-detail-image{min-height:0}.product-detail-image img{max-height:420px}}
+
+/* Keyboard focus and narrow-screen resilience. */
+:where(a,button,input,select,textarea,summary):focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.nv-inventory-warning{grid-column:1/-1;padding:14px;border:1px solid var(--accent);color:var(--text);line-height:1.6}
+.search-panel input{min-width:0}
+.product-bottom{flex-wrap:wrap;gap:10px}
+@media(max-width:560px){.catalog-search{min-width:0}.site-header .logo-link{max-width:38vw}.nv-header-social{display:none}.nv-catalog-tools select{min-height:44px}.search-panel input{font-size:16px}.drawer-head button,.search-panel button,.icon-btn{min-width:44px;min-height:44px}}
+@media(prefers-reduced-motion:reduce){.product-card,.btn,.brand-tile,.nv-merch-tile{transition:none;transform:none!important}}

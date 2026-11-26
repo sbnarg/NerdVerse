@@ -10,7 +10,7 @@ const db={auth:{getUser:async()=>({data:{user:{id:'admin'}}})},from(table){
  const q={select(){return q},eq(){return q},update(row){patch=row;updates.push(row);return q},async maybeSingle(){return table==='admin_users'?{data:{role:'admin'}}:patch?{data:{id:'product'}}:{data:{image_urls:images}}}};
  return q;
 }};
-let source=readFileSync('supabase/functions/admin-api/index.ts','utf8').replace(/import [^;]+ from '[^']+';/g,'');
+let source=readFileSync(new URL('../supabase/functions/admin-api/index.ts',import.meta.url),'utf8').replace(/import [^;]+ from '[^']+';/g,'');
 source=stripTypeScriptTypes(source);
 const context={productImageUrls,createClient:()=>db,Deno:{env:{get:k=>k==='SUPABASE_URL'?'https://hzzuqylaypoylakgnqxs.supabase.co':'test'},serve:f=>handler=f},json:(b,status=200)=>new Response(JSON.stringify(b),{status}),corsHeaders:{},URL,Response,Set,Date,Number,Object,Error};
 vm.runInNewContext(source,context);
